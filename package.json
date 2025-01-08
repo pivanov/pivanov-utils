@@ -1,0 +1,89 @@
+{
+  "name": "@pivanov/utils",
+  "version": "0.0.1",
+  "description": "A collection of personal utilities to live a happier life",
+  "type": "module",
+  "packageManager": "pnpm@9.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/pivanov/utils.git"
+  },
+  "homepage": "https://github.com/pivanov/utils#readme",
+  "bugs": {
+    "url": "https://github.com/pivanov/utils/issues"
+  },
+  "scripts": {
+    "build": "rm -rf dist && pnpm rollup -c",
+    "test": "pnpm vitest",
+    "test:coverage": "pnpm vitest --coverage",
+    "test:ui": "pnpm vitest --ui",
+    "lint": "biome lint .",
+    "format": "biome format . --write",
+    "check": "biome check . --write",
+    "prepublishOnly": "pnpm build"
+  },
+  "author": {
+    "name": "Pavel Ivanov",
+    "email": "iweb.ivanov@gmail.com",
+    "url": "https://github.com/pivanov"
+  },
+  "keywords": [
+    "utils",
+    "typescript",
+    "react",
+    "web-components",
+    "dom",
+    "cache",
+    "event-bus",
+    "string",
+    "object",
+    "promise",
+    "r2wc",
+    "react-to-web-component"
+  ],
+  "license": "MIT",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "files": ["dist/"],
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@rollup/plugin-commonjs": "^28.0.0",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-typescript": "^12.1.1",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.0.1",
+    "@testing-library/react-hooks": "^8.0.1",
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vercel/ncc": "0.38.2",
+    "@vitest/coverage-v8": "^2.1.4",
+    "evt": "^2.4.18",
+    "glob": "^11.0.0",
+    "husky": "^4.3.0",
+    "jsdom": "^25.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "rollup": "^4.23.0",
+    "rollup-plugin-dts": "^6.1.1",
+    "rollup-plugin-terser": "^7.0.2",
+    "tslib": "^2.7.0",
+    "typescript": "5.7.2",
+    "vitest": "^2.1.4"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

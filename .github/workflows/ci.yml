@@ -1,0 +1,95 @@
+name: ci
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node: ['20']
+        os: [ubuntu-latest, macos-latest]
+    name: Test with Node v${{ matrix.node }} on ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node }}
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: pnpm install
+
+    - name: Run tests
+      run: pnpm test:coverage
+      env:
+        CI: true
+        NODE_ENV: test
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+  check_token:
+    runs-on: ubuntu-latest
+    outputs:
+      has_token: ${{ steps.check.outputs.has_token }}
+    steps:
+      - id: check
+        run: |
+          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "has_token=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_token=false" >> $GITHUB_OUTPUT
+          fi
+
+  publish:
+    needs: [test, check_token]
+    # Conditional execution based on the presence of NPM_TOKEN
+    if: needs.check_token.outputs.has_token == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm build
+
+      - name: Check version and publish
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          PUBLISHED_VERSION=$(pnpm view . version || echo "0.0.0")
+
+          if [ "$PACKAGE_VERSION" != "$PUBLISHED_VERSION" ]; then
+            echo "Publishing version $PACKAGE_VERSION"
+            pnpm publish
+          else
+            echo "Current version $PACKAGE_VERSION is already published"
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
