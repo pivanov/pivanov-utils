@@ -222,5 +222,73 @@ describe('Cache API Utils', () => {
       const result = await storageCalculateSize('testCache');
       expect(result).toBe(0);
     });
+
+    it('should throw error when cache.open fails', async () => {
+      mockCaches.open.mockRejectedValueOnce(new Error('Failed to open cache'));
+
+      await expect(storageCalculateSize('testCache')).rejects.toThrow(
+        'Failed to open cache',
+      );
+    });
+
+    it('should throw error when cache.match fails', async () => {
+      mockCache.match.mockRejectedValueOnce(
+        new Error('Failed to match cache entry'),
+      );
+
+      await expect(
+        storageCalculateSize('testCache', 'testKey'),
+      ).rejects.toThrow('Failed to match cache entry');
+    });
+
+    it('should throw error when cache.keys fails', async () => {
+      mockCache.keys.mockRejectedValueOnce(
+        new Error('Failed to get cache keys'),
+      );
+
+      await expect(storageCalculateSize('testCache')).rejects.toThrow(
+        'Failed to get cache keys',
+      );
+    });
+
+    it('should handle empty cache', async () => {
+      mockCache.keys.mockResolvedValue([]);
+
+      const result = await storageCalculateSize('testCache');
+      expect(result).toBe(0);
+    });
+
+    it('should handle large cache entries', async () => {
+      const largeData = new ArrayBuffer(1024 * 1024); // 1MB
+      const mockLargeResponse = new Response(largeData);
+      mockCache.match.mockResolvedValue(mockLargeResponse);
+      mockCache.keys.mockResolvedValue([
+        new Request('http://test.com/key1'),
+        new Request('http://test.com/key2'),
+      ]);
+
+      const result = await storageCalculateSize('testCache');
+      expect(result).toBe(2 * 1024 * 1024); // Should be 2MB total
+    });
+
+    it('should handle mixed response types', async () => {
+      const textResponse = new Response('Hello World');
+      const jsonResponse = new Response(JSON.stringify({ data: 'test' }));
+      const binaryResponse = new Response(new ArrayBuffer(100));
+
+      mockCache.keys.mockResolvedValue([
+        new Request('http://test.com/text'),
+        new Request('http://test.com/json'),
+        new Request('http://test.com/binary'),
+      ]);
+
+      mockCache.match
+        .mockResolvedValueOnce(textResponse)
+        .mockResolvedValueOnce(jsonResponse)
+        .mockResolvedValueOnce(binaryResponse);
+
+      const result = await storageCalculateSize('testCache');
+      expect(result).toBeGreaterThan(0);
+    });
   });
 });

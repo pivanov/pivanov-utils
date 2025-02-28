@@ -1,16 +1,16 @@
 {
   "name": "@pivanov/utils",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A collection of personal utilities to live a happier life",
   "type": "module",
   "packageManager": "pnpm@9.0.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/pivanov/utils.git"
+    "url": "git://github.com/pivanov/pivanov-utils.git"
   },
-  "homepage": "https://github.com/pivanov/utils#readme",
+  "homepage": "https://github.com/pivanov/pivanov-utils#readme",
   "bugs": {
-    "url": "https://github.com/pivanov/utils/issues"
+    "url": "https://github.com/pivanov/pivanov-utils/issues"
   },
   "scripts": {
     "build": "rm -rf dist && pnpm rollup -c",

@@ -15,6 +15,7 @@ export const stringifyBigIntValues = (_key: string, value: unknown) => {
  * @param cacheName The name of the cache
  * @param key The key under which the value will be stored
  * @param value The value to store
+ * @throws Will throw an error if the operation fails
  */
 export const storageSetItem = async (
   cacheName: string,
@@ -36,8 +37,12 @@ export const storageSetItem = async (
  * @param cacheName The name of the cache
  * @param key The key of the value to retrieve
  * @returns The retrieved value, or null if not found
+ * @throws Will throw an error if the operation fails
  */
-export const storageGetItem = async <T>(cacheName: string, key: string): Promise<T | null> => {
+export const storageGetItem = async <T>(
+  cacheName: string,
+  key: string,
+): Promise<T | null> => {
   const cache = await caches.open(cacheName);
   const response = await cache.match(key);
   if (!response) {
@@ -51,15 +56,21 @@ export const storageGetItem = async <T>(cacheName: string, key: string): Promise
  * Remove a value from Cache API
  * @param cacheName The name of the cache
  * @param key The key of the value to remove
+ * @returns True if the key was found and deleted, false if the key wasn't found
+ * @throws Will throw an error if the operation fails
  */
-export const storageRemoveItem = async (cacheName: string, key: string): Promise<void> => {
+export const storageRemoveItem = async (
+  cacheName: string,
+  key: string,
+): Promise<boolean> => {
   const cache = await caches.open(cacheName);
-  await cache.delete(key);
+  return await cache.delete(key);
 };
 
 /**
  * Clear all values from Cache API
  * @param cacheName The name of the cache
+ * @throws Will throw an error if the operation fails
  */
 export const storageClear = async (cacheName: string): Promise<void> => {
   const cache = await caches.open(cacheName);
@@ -74,6 +85,7 @@ export const storageClear = async (cacheName: string): Promise<void> => {
  * @param cacheName The name of the cache
  * @param str The prefix or suffix to match keys against
  * @param isPrefix If true, match keys that start with `str`. If false, match keys that end with `str`.
+ * @throws Will throw an error if the operation fails
  */
 export const storageClearByPrefixOrSuffix = async (
   cacheName: string,
@@ -96,8 +108,12 @@ export const storageClearByPrefixOrSuffix = async (
  * @param cacheName The name of the cache
  * @param key The key to check
  * @returns True if the key exists, false otherwise
+ * @throws Will throw an error if the operation fails
  */
-export const storageExists = async (cacheName: string, key: string): Promise<boolean> => {
+export const storageExists = async (
+  cacheName: string,
+  key: string,
+): Promise<boolean> => {
   const cache = await caches.open(cacheName);
   const response = await cache.match(key);
   return response !== undefined;
@@ -107,8 +123,11 @@ export const storageExists = async (cacheName: string, key: string): Promise<boo
  * Get all keys from Cache API
  * @param cacheName The name of the cache
  * @returns An array of all keys in Cache API
+ * @throws Will throw an error if the operation fails
  */
-export const storageGetAllKeys = async (cacheName: string): Promise<string[]> => {
+export const storageGetAllKeys = async (
+  cacheName: string,
+): Promise<string[]> => {
   const cache = await caches.open(cacheName);
   const keys = await cache.keys();
   return keys.map((request) => {
@@ -124,19 +143,23 @@ export const storageGetAllKeys = async (cacheName: string): Promise<string[]> =>
  * @param cacheName The name of the cache
  * @param cacheKey Optional. The key of the specific cache entry to calculate size for.
  * @returns The total size of the cache or the specific cache entry in bytes
+ * @throws Will throw an error if the operation fails
  */
-export const storageCalculateSize = async (cacheName: string, cacheKey?: string): Promise<number> => {
+export const storageCalculateSize = async (
+  cacheName: string,
+  cacheKey?: string,
+): Promise<number> => {
   const cache = await caches.open(cacheName);
 
   // If a specific cacheKey is provided, calculate the size of that entry
   if (cacheKey) {
     const response = await cache.match(cacheKey);
     if (response) {
-      const clonedResponse = response.clone(); // Clone to avoid consuming the body
-      const body = await clonedResponse.arrayBuffer(); // Get the body as an ArrayBuffer
-      return body.byteLength; // Return the byte length of the specific cache entry
+      const clonedResponse = response.clone();
+      const body = await clonedResponse.arrayBuffer();
+      return body.byteLength;
     }
-    return 0; // Return 0 if the cacheKey is not found
+    return 0;
   }
 
   // If no cacheKey is provided, calculate the size of all cache entries
