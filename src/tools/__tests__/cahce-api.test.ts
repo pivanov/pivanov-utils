@@ -62,9 +62,11 @@ describe('Cache API Utils', () => {
 
       expect(mockCaches.open).toHaveBeenCalledWith('testCache');
       expect(mockCache.put).toHaveBeenCalledWith(
-        'testKey',
+        expect.any(Request),
         expect.any(Response),
       );
+      const request = mockCache.put.mock.calls[0][0];
+      expect(request.url).toBe('https://cache.internal/testKey');
     });
 
     it('should handle BigInt values correctly', async () => {
@@ -72,9 +74,37 @@ describe('Cache API Utils', () => {
       await storageSetItem('testCache', 'testKey', value);
 
       expect(mockCache.put).toHaveBeenCalledWith(
-        'testKey',
+        expect.any(Request),
         expect.any(Response),
       );
+      const request = mockCache.put.mock.calls[0][0];
+      expect(request.url).toBe('https://cache.internal/testKey');
+    });
+
+    it('should handle keys with https:// prefix', async () => {
+      const value = { test: 'data' };
+      const fullUrl = 'https://example.com/api/data';
+      await storageSetItem('testCache', fullUrl, value);
+
+      expect(mockCache.put).toHaveBeenCalledWith(
+        expect.any(Request),
+        expect.any(Response),
+      );
+      const request = mockCache.put.mock.calls[0][0];
+      expect(request.url).toBe(fullUrl);
+    });
+
+    it('should handle keys with http:// prefix', async () => {
+      const value = { test: 'data' };
+      const fullUrl = 'http://example.com/api/data';
+      await storageSetItem('testCache', fullUrl, value);
+
+      expect(mockCache.put).toHaveBeenCalledWith(
+        expect.any(Request),
+        expect.any(Response),
+      );
+      const request = mockCache.put.mock.calls[0][0];
+      expect(request.url).toBe(fullUrl);
     });
   });
 
@@ -87,6 +117,9 @@ describe('Cache API Utils', () => {
 
       const result = await storageGetItem('testCache', 'testKey');
       expect(result).toEqual(mockValue);
+      expect(mockCache.match).toHaveBeenCalledWith(expect.any(Request));
+      const request = mockCache.match.mock.calls[0][0];
+      expect(request.url).toBe('https://cache.internal/testKey');
     });
 
     it('should return null for non-existent key', async () => {
@@ -101,15 +134,17 @@ describe('Cache API Utils', () => {
     it('should remove item from cache', async () => {
       await storageRemoveItem('testCache', 'testKey');
 
-      expect(mockCache.delete).toHaveBeenCalledWith('testKey');
+      expect(mockCache.delete).toHaveBeenCalledWith(expect.any(Request));
+      const request = mockCache.delete.mock.calls[0][0];
+      expect(request.url).toBe('https://cache.internal/testKey');
     });
   });
 
   describe('storageClear', () => {
     it('should clear all items from cache', async () => {
       mockCache.keys.mockResolvedValue([
-        new Request('http://test.com/testKey1'),
-        new Request('http://test.com/testKey2'),
+        new Request('https://cache.internal/testKey1'),
+        new Request('https://cache.internal/testKey2'),
       ]);
 
       await storageClear('testCache');
@@ -121,10 +156,10 @@ describe('Cache API Utils', () => {
   describe('storageClearByPrefixOrSuffix', () => {
     beforeEach(() => {
       mockCache.keys.mockResolvedValue([
-        new Request('http://test.com/prefix_key1'),
-        new Request('http://test.com/prefix_key2'),
-        new Request('http://test.com/other_key'),
-        new Request('http://test.com/'), // Test empty key case
+        new Request('https://cache.internal/prefix_key1'),
+        new Request('https://cache.internal/prefix_key2'),
+        new Request('https://cache.internal/other_key'),
+        new Request('https://cache.internal/'),
       ]);
     });
 
@@ -140,7 +175,7 @@ describe('Cache API Utils', () => {
 
     it('should handle empty keys correctly', async () => {
       await storageClearByPrefixOrSuffix('testCache', '', true);
-      expect(mockCache.delete).toHaveBeenCalledTimes(4); // Should match all keys including empty
+      expect(mockCache.delete).toHaveBeenCalledTimes(4);
     });
   });
 
@@ -150,6 +185,9 @@ describe('Cache API Utils', () => {
 
       const result = await storageExists('testCache', 'testKey');
       expect(result).toBe(true);
+      expect(mockCache.match).toHaveBeenCalledWith(expect.any(Request));
+      const request = mockCache.match.mock.calls[0][0];
+      expect(request.url).toBe('https://cache.internal/testKey');
     });
 
     it('should return false for non-existent key', async () => {
@@ -163,8 +201,8 @@ describe('Cache API Utils', () => {
   describe('storageGetAllKeys', () => {
     it('should return all cache keys', async () => {
       mockCache.keys.mockResolvedValue([
-        new Request('http://test.com/key1'),
-        new Request('http://test.com/key2'),
+        new Request('https://cache.internal/key1'),
+        new Request('https://cache.internal/key2'),
       ]);
 
       const result = await storageGetAllKeys('testCache');
@@ -176,8 +214,8 @@ describe('Cache API Utils', () => {
 
     it('should handle URLs without path components', async () => {
       mockCache.keys.mockResolvedValue([
-        new Request('http://test.com'),
-        new Request('http://test.com/'),
+        new Request('https://cache.internal'),
+        new Request('https://cache.internal/'),
       ]);
 
       const result = await storageGetAllKeys('testCache');
@@ -194,12 +232,15 @@ describe('Cache API Utils', () => {
     it('should calculate size for specific cache key', async () => {
       const result = await storageCalculateSize('testCache', 'testKey');
       expect(result).toBeGreaterThan(0);
+      expect(mockCache.match).toHaveBeenCalledWith(expect.any(Request));
+      const request = mockCache.match.mock.calls[0][0];
+      expect(request.url).toBe('https://cache.internal/testKey');
     });
 
     it('should calculate total cache size', async () => {
       mockCache.keys.mockResolvedValue([
-        new Request('http://test.com/key1'),
-        new Request('http://test.com/key2'),
+        new Request('https://cache.internal/key1'),
+        new Request('https://cache.internal/key2'),
       ]);
 
       const result = await storageCalculateSize('testCache');
@@ -214,8 +255,8 @@ describe('Cache API Utils', () => {
 
     it('should handle null response when calculating total size', async () => {
       mockCache.keys.mockResolvedValue([
-        new Request('http://test.com/key1'),
-        new Request('http://test.com/key2'),
+        new Request('https://cache.internal/key1'),
+        new Request('https://cache.internal/key2'),
       ]);
       mockCache.match.mockResolvedValue(null);
 
@@ -259,16 +300,16 @@ describe('Cache API Utils', () => {
     });
 
     it('should handle large cache entries', async () => {
-      const largeData = new ArrayBuffer(1024 * 1024); // 1MB
+      const largeData = new ArrayBuffer(1024 * 1024);
       const mockLargeResponse = new Response(largeData);
       mockCache.match.mockResolvedValue(mockLargeResponse);
       mockCache.keys.mockResolvedValue([
-        new Request('http://test.com/key1'),
-        new Request('http://test.com/key2'),
+        new Request('https://cache.internal/key1'),
+        new Request('https://cache.internal/key2'),
       ]);
 
       const result = await storageCalculateSize('testCache');
-      expect(result).toBe(2 * 1024 * 1024); // Should be 2MB total
+      expect(result).toBe(2 * 1024 * 1024);
     });
 
     it('should handle mixed response types', async () => {
@@ -277,9 +318,9 @@ describe('Cache API Utils', () => {
       const binaryResponse = new Response(new ArrayBuffer(100));
 
       mockCache.keys.mockResolvedValue([
-        new Request('http://test.com/text'),
-        new Request('http://test.com/json'),
-        new Request('http://test.com/binary'),
+        new Request('https://cache.internal/text'),
+        new Request('https://cache.internal/json'),
+        new Request('https://cache.internal/binary'),
       ]);
 
       mockCache.match

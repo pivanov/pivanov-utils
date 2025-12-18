@@ -1,54 +1,54 @@
 # @pivanov/utils
 
 <p align="center">
-    <i>A comprehensive collection of TypeScript utilities for modern web development</i>
-    <br>
-    <br>
-    <img src="https://img.shields.io/npm/v/@pivanov/utils?logo=npm" alt="NPM Version">
-    &nbsp;&nbsp;
-    <img src="https://img.shields.io/bundlephobia/minzip/@pivanov/utils" alt="Bundle Size">
-    &nbsp;&nbsp;
-    <img src="https://github.com/pivanov/pivanov-utils/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI Status" />
-    &nbsp;&nbsp;
-    <img src="https://codecov.io/github/pivanov/pivanov-utils/graph/badge.svg?token=EPRKTP7D79" alt="Coverage Status">
+  <i>A comprehensive collection of TypeScript utilities for modern web development</i>
+  <br />
+  <br />
+  <img src="https://img.shields.io/npm/v/@pivanov/utils?logo=npm" alt="NPM Version" />
+  &nbsp;&nbsp;
+  <img src="https://img.shields.io/bundlephobia/minzip/@pivanov/utils" alt="Bundle Size" />
+  &nbsp;&nbsp;
+  <img src="https://github.com/pivanov/pivanov-utils/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI Status" />
+  &nbsp;&nbsp;
+  <img src="https://codecov.io/github/pivanov/pivanov-utils/graph/badge.svg?token=EPRKTP7D79" alt="Coverage Status" />
 </p>
 
 ## Features
 
-- 🔄 **Type-Safe** - Full TypeScript support with strict type checking
-- 🔄 **Immutable Operations** - Safe object and array manipulations
-- 🎨 **String Transformations** - Comprehensive string formatting utilities
-- 🛠️ **DOM Utilities** - Browser-safe DOM manipulation helpers
-- ⚡ **Performance Focused** - Optimized for both speed and bundle size
-- 📦 **Tree-Shakeable** - Import only what you need
-- 📝 **Well Documented** - Detailed documentation and examples
-- ✅ **Well Tested** - Comprehensive test coverage
+- 🔒 **Type-Safe** - Full TypeScript support with strict type checking and excellent type inference
+- 🎯 **Tree-Shakeable** - Import only what you need for minimal bundle size
+- ⚡ **Performance Focused** - Optimized implementations with no external dependencies
+- 🧪 **Well Tested** - Comprehensive test coverage for reliability
+- 📦 **Modular** - Organized into focused modules for easy navigation
+- 📝 **Well Documented** - Detailed JSDoc comments and examples
 
 ## Installation
 
 ```bash
-pnpm install @pivanov/utils
-# or
-yarn add @pivanov/utils
+pnpm add @pivanov/utils
 # or
 npm install @pivanov/utils
+# or
+yarn add @pivanov/utils
 ```
 
-## Documentation
+## Quick Start
 
-### Module Overview
+```typescript
+import { camelCase } from '@pivanov/utils/string';
+import { pick } from '@pivanov/utils/object';
+import { isString } from '@pivanov/utils/assertion';
 
-The package is organized into several modules:
+camelCase('foo-bar'); // 'fooBar'
+pick({ name: 'John', age: 30 }, ['name']); // { name: 'John' }
+isString('hello'); // true
+```
 
-- **assertion** - Type guards and runtime type checking
-- **object** - Object manipulation utilities
-- **promise** - Async utilities and promise helpers
-- **string** - String transformation utilities
-- **tools** - Various utilities including DOM, Event Bus, and more
+## API Reference
 
-### Assertion Module
+### Type Guards & Assertions
 
-Type-safe runtime type checking utilities.
+Runtime type checking with TypeScript type narrowing.
 
 ```typescript
 import {
@@ -58,32 +58,32 @@ import {
   isObject,
   isFunction,
   isNull,
-  isUndefined
+  isUndefined,
 } from '@pivanov/utils/assertion';
 
-// Type Guards with TypeScript type narrowing
-isString('hello');     // type narrowed to string
-isNumber(123);        // type narrowed to number
-isBoolean(true);      // type narrowed to boolean
-isObject({});         // type narrowed to object
-isFunction(() => {}); // type narrowed to function
-isNull(null);         // type narrowed to null
-isUndefined(void 0);  // type narrowed to undefined
-
-// Use in conditional checks
+// Type guards automatically narrow TypeScript types
 function processValue(value: unknown) {
   if (isString(value)) {
-    return value.toUpperCase(); // TypeScript knows value is string
+    return value.toUpperCase(); // TypeScript knows this is a string
   }
   if (isNumber(value)) {
-    return value.toFixed(2);    // TypeScript knows value is number
+    return value.toFixed(2); // TypeScript knows this is a number
   }
 }
+
+// Examples
+isString('hello'); // true
+isNumber(42); // true
+isBoolean(true); // true
+isObject({}); // true (plain objects only, not arrays)
+isFunction(() => {}); // true
+isNull(null); // true
+isUndefined(undefined); // true
 ```
 
-### Object Module
+### Object Utilities
 
-Type-safe object manipulation utilities.
+Immutable object manipulation with full type safety.
 
 ```typescript
 import { pick, omit, merge, deepMerge } from '@pivanov/utils/object';
@@ -98,8 +98,8 @@ omit(user, ['email']);
 // { name: 'John', age: 30 }
 
 // Shallow merge
-merge({ a: 1 }, { b: 2 });
-// { a: 1, b: 2 }
+merge({ a: 1, b: 2 }, { b: 3, c: 4 });
+// { a: 1, b: 3, c: 4 }
 
 // Deep merge with nested structures
 deepMerge(
@@ -109,24 +109,9 @@ deepMerge(
 // { user: { name: 'John', settings: { theme: 'dark', fontSize: 14 } } }
 ```
 
-### Promise Module
+### String Utilities
 
-Async utilities for better promise handling.
-
-```typescript
-import { sleep } from '@pivanov/utils/promise';
-
-// Pause execution for specified duration
-async function example() {
-  console.log('Start');
-  await sleep(1000); // Wait for 1 second
-  console.log('End');
-}
-```
-
-### String Module
-
-String manipulation utilities with TypeScript support.
+String transformation utilities with TypeScript template literal types support.
 
 ```typescript
 import {
@@ -136,234 +121,289 @@ import {
   slugify,
   capitalize,
   uncapitalize,
-  capitalizeFirstLetter
+  capitalizeFirstLetter,
 } from '@pivanov/utils/string';
 
 // Case transformations
-camelCase('foo-bar');      // 'fooBar'
-pascalCase('foo_bar');     // 'FooBar'
-kebabCase('fooBar');       // 'foo-bar'
-slugify('Hello World!');   // 'hello-world'
+camelCase('foo-bar'); // 'fooBar'
+camelCase('FOO_BAR'); // 'fooBar'
+
+pascalCase('foo-bar'); // 'FooBar'
+pascalCase('foo_bar_baz'); // 'FooBarBaz'
+
+kebabCase('fooBar'); // 'foo-bar'
+kebabCase('XMLHttpRequest'); // 'xml-http-request'
+
+slugify('Hello World!'); // 'hello-world'
+slugify('Über Café'); // 'uber-cafe'
 
 // Capitalization with TypeScript support
-capitalize('hello');       // 'Hello' (with type Capitalize<'hello'>)
-uncapitalize('Hello');     // 'hello' (with type Uncapitalize<'Hello'>)
+capitalize('hello'); // 'Hello' (type: Capitalize<'hello'>)
+uncapitalize('Hello'); // 'hello' (type: Uncapitalize<'Hello'>)
 capitalizeFirstLetter('hello world'); // 'Hello world'
 ```
 
-### Tools Module
+**When to use each:**
 
-Various utilities for DOM manipulation, event handling, and more.
+- `camelCase`: JavaScript/TypeScript variables and properties
+- `pascalCase`: Class names, React components, TypeScript types
+- `kebabCase`: CSS classes, HTML attributes, file names
+- `slugify`: URL slugs (more aggressive than kebabCase)
 
-#### DOM Utilities
+### Promise Utilities
 
-```typescript
-import { checkVisibility, setStyleProperties } from '@pivanov/utils/tools';
-
-// Check element visibility
-const isVisible = checkVisibility(element);
-
-// Set CSS custom properties
-setStyleProperties(element, {
-  '--background-color': '#fff',
-  '--text-color': '#000'
-});
-```
-
-#### Event Bus
-
-Type-safe event bus with React hooks support.
+Simple async utilities for better promise handling.
 
 ```typescript
-import { busDispatch, busSubscribe, useEventBus } from '@pivanov/utils/tools/eventBus';
+import { sleep } from '@pivanov/utils/promise';
 
-// Define your events interface
-interface Events {
-  'user-logged-in': { id: number; name: string };
-  'data-updated': { timestamp: number };
+async function example() {
+  console.log('Start');
+  await sleep(1000); // Wait 1 second
+  console.log('Done');
 }
-
-// React hook usage
-function Component() {
-  useEventBus('user-logged-in', (data) => {
-    console.log('User logged in:', data.name);
-  });
-}
-
-// Direct subscription
-const unsubscribe = busSubscribe('data-updated', (data) => {
-  console.log('Data updated at:', data.timestamp);
-});
-
-// Dispatch events
-busDispatch('user-logged-in', { id: 1, name: 'John' });
 ```
 
-#### Deep Clone & Equality
+### Deep Clone & Equality
+
+High-performance deep cloning and comparison with circular reference handling.
 
 ```typescript
 import { deepClone, isEqual } from '@pivanov/utils/tools';
 
-// Deep clone with circular reference handling
+// Deep clone complex structures
 const original = {
   nested: { array: [1, 2, { value: 3 }] },
   date: new Date(),
-  circular: {} as any
+  map: new Map([['key', 'value']]),
+  set: new Set([1, 2, 3]),
+  circular: {} as any,
 };
-original.circular = original;
+original.circular = original; // Circular reference
+
 const cloned = deepClone(original);
+// Fully independent copy with circular references preserved
 
 // Deep equality comparison
 isEqual({ a: [1, 2, 3] }, { a: [1, 2, 3] }); // true
 isEqual(new Date('2024-01-01'), new Date('2024-01-01')); // true
 isEqual([1, 2, [3, 4]], [1, 2, [3, 4]]); // true
+isEqual(new Set([1, 2]), new Set([2, 1])); // false (Sets maintain order)
 ```
 
-#### Cache API
+**Supported types:**
 
-Browser-safe cache utilities with TypeScript support.
+- Primitives (string, number, boolean, null, undefined, symbol, bigint)
+- Arrays (including sparse arrays)
+- Plain objects (with getters/setters)
+- Date, RegExp, Map, Set
+- TypedArrays, ArrayBuffer, Buffer
+- Circular references
+
+### Event Bus
+
+Type-safe, lightweight event bus with React hooks support.
 
 ```typescript
-import { CacheAPI } from '@pivanov/utils/tools/cache-api';
+import { busDispatch, busSubscribe, useEventBus } from '@pivanov/utils/tools';
 
-// Initialize cache
-const cache = new CacheAPI('my-cache');
+// Define your application events (optional but recommended)
+type AppEvents = {
+  'user-logged-in': { id: number; name: string };
+  'data-updated': { timestamp: number };
+  'notification': { message: string; type: 'info' | 'error' };
+};
 
-// Store data with expiration
-await cache.set('user-data', { name: 'John' }, {
-  expireIn: '1h' // Supports: 's' (seconds), 'm' (minutes), 'h' (hours), 'd' (days)
+// React hook usage (auto-unsubscribes on unmount)
+function UserProfile() {
+  useEventBus<AppEvents>('user-logged-in', (data) => {
+    console.log(`Welcome ${data.name}!`);
+  });
+
+  return <div>Profile</div>;
+}
+
+// Vanilla JavaScript usage
+const unsubscribe = busSubscribe<AppEvents>('data-updated', (data) => {
+  console.log('Updated at:', data.timestamp);
+});
+
+// Later: cleanup
+unsubscribe();
+
+// Dispatch events anywhere in your app
+busDispatch<AppEvents>('user-logged-in', { id: 1, name: 'John' });
+busDispatch<AppEvents>('notification', {
+  message: 'Settings saved',
+  type: 'info',
+});
+```
+
+**Features:**
+
+- Fully type-safe with TypeScript
+- Works across React and vanilla JavaScript
+- Automatic cleanup with React hook
+- Uses hashed topic names to avoid collisions
+- Zero dependencies
+
+### Browser Cache API
+
+Type-safe wrapper around the browser Cache API with expiration support.
+
+```typescript
+import {
+  storageSetItem,
+  storageGetItem,
+  storageRemoveItem,
+  storageExists,
+  storageClear,
+  storageClearByPrefixOrSuffix,
+  storageGetAllKeys,
+  storageCalculateSize,
+} from '@pivanov/utils/tools';
+
+const CACHE_NAME = 'my-app-cache';
+
+// Store data
+await storageSetItem(CACHE_NAME, 'user-data', {
+  id: 1,
+  name: 'John',
+  bigNumber: BigInt(9007199254740991), // BigInt support!
 });
 
 // Retrieve data
-const userData = await cache.get('user-data');
-
-// Check if data exists and is not expired
-const exists = await cache.has('user-data');
-
-// Remove data
-await cache.delete('user-data');
-
-// Clear all cache
-await cache.clear();
-```
-
-#### React to Web Components (r2wc)
-
-A utility to convert React components into standalone Web Components that can be used in any application.
-
-##### Creating a Widget
-
-Create a single file for your widget (e.g., `sparkline-widget.ts`):
-```typescript
-import { registerWidget } from '@pivanov/utils';
-
-// Your React component
-const SparklineChart = ({ values, color }) => (
-  <div className="sparkline">
-    {/* Your chart implementation */}
-  </div>
+const userData = await storageGetItem<{ id: number; name: string }>(
+  CACHE_NAME,
+  'user-data'
 );
 
-// Register the widget with optional configuration
-registerWidget({
-  name: 'sparkline',
-  component: SparklineChart,
-  styles: [
-    'https://cdn.example.com/styles/sparkline.css',  // Optional: CSS files to load
-  ],
-  svgSpritePath: 'https://cdn.example.com/icons/sprite.svg', // Optional: SVG sprite path
-});
+// Check existence
+const exists = await storageExists(CACHE_NAME, 'user-data');
+
+// Remove specific item
+await storageRemoveItem(CACHE_NAME, 'user-data');
+
+// Get all keys
+const keys = await storageGetAllKeys(CACHE_NAME);
+
+// Clear items by prefix
+await storageClearByPrefixOrSuffix(CACHE_NAME, 'temp-', true);
+
+// Clear items by suffix
+await storageClearByPrefixOrSuffix(CACHE_NAME, '-cache', false);
+
+// Calculate cache size (in bytes)
+const totalSize = await storageCalculateSize(CACHE_NAME);
+const itemSize = await storageCalculateSize(CACHE_NAME, 'user-data');
+
+// Clear all cache
+await storageClear(CACHE_NAME);
 ```
 
-##### Using in React Applications
+**Features:**
+
+- Automatic JSON serialization/deserialization
+- BigInt support (automatically converted to strings)
+- Type-safe with generics
+- Works with absolute URLs as keys
+- Size calculation utilities
+
+### DOM Utilities
+
+Browser-safe DOM manipulation helpers.
 
 ```typescript
-import { importWidgets } from '@pivanov/utils';
-import { createRoot } from 'react-dom/client';
-import { App } from './app';
+import {
+  isBrowser,
+  checkVisibility,
+  setStyleProperties,
+  calculateRenderedTextWidth,
+} from '@pivanov/utils/tools';
 
-// Load widgets ... we need to do this once
-void importWidgets([
-  'https://cdn.example.com/widgets/sparkline.js'
-]);
-
-const container = document.getElementById('root');
-if (container) {
-  createRoot(container).render(<App />);
+// Check if running in browser (SSR-safe)
+if (isBrowser()) {
+  // Browser-only code
+  window.addEventListener('scroll', handleScroll);
 }
 
-...
+// Check element visibility in viewport
+const element = document.querySelector('.my-element') as HTMLElement;
+if (checkVisibility(element)) {
+  element.classList.add('visible');
+}
 
-// Then use the widgets as React components
-<WidgetComponent
-  name="sparkline"
-  widgetProps={{ color: 'green', values: [1, 2, 3, 4, 5] }}
-/>
+// Set CSS custom properties
+setStyleProperties(element, {
+  '--primary-color': '#3b82f6',
+  '--spacing': '1rem',
+  '--border-radius': '8px',
+});
+
+// Calculate text width for dynamic layouts
+const width = calculateRenderedTextWidth('Hello World', 16);
+const widthUppercase = calculateRenderedTextWidth('Hello World', 16, true);
+const widthCustomFont = calculateRenderedTextWidth(
+  'Hello World',
+  16,
+  false,
+  'Arial'
+);
 ```
 
-##### Using in Plain HTML
+## Tree Shaking
 
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <script type="module">
-    import { importWidgets, renderWidget } from 'https://esm.sh/@pivanov/utils';
-
-    void importWidgets([
-      'https://cdn.example.com/widgets/sparkline.js'
-    ]);
-
-    renderWidget({
-      name: 'sparkline',
-      mountTo: document.getElementById('sparkline'),
-      widgetProps: {
-        color: 'green',
-        values: [1, 2, 3, 4, 5]
-      }
-    });
-  </script>
-</head>
-<body>
-  <div id="sparkline"></div>
-</body>
-</html>
-```
-
-Key Features:
-- Single-file widget definition
-- Automatic CSS and SVG sprite loading
-- ESM support for browser and bundler usage
-- TypeScript support with proper type inference
-- Works in both React and plain HTML environments
-
-### Tree Shaking
-
-Import specific utilities to minimize bundle size:
+Import only what you need to minimize bundle size:
 
 ```typescript
-// Import only what you need
+// ✅ Good: Import specific utilities
 import { camelCase } from '@pivanov/utils/string';
 import { deepClone } from '@pivanov/utils/tools';
-import { isString } from '@pivanov/utils/assertion';
+
+// ❌ Avoid: Importing everything
+import * as utils from '@pivanov/utils';
 ```
 
-### TypeScript Integration
+## TypeScript Support
 
-All utilities are written in TypeScript and provide excellent type inference:
+All utilities provide excellent type inference:
 
 ```typescript
 import { pick } from '@pivanov/utils/object';
+import { capitalize } from '@pivanov/utils/string';
 
-// TypeScript will infer correct types
-const user = { name: 'John', age: 30 } as const;
-const picked = pick(user, ['name']); // Type: { name: "John" }
+// TypeScript infers exact types
+const user = { name: 'John', age: 30, email: 'john@example.com' } as const;
+const picked = pick(user, ['name', 'email']);
+// Type: { name: "John"; email: "john@example.com" }
+
+const str = 'hello' as const;
+const capitalized = capitalize(str);
+// Type: "Hello"
 ```
 
-## Contributing
+## Module Overview
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
+```text
+@pivanov/utils
+├── /assertion    - Type guards (isString, isNumber, etc.)
+├── /object       - Object utilities (pick, omit, merge, deepMerge)
+├── /promise      - Async utilities (sleep)
+├── /string       - String utilities (camelCase, kebabCase, etc.)
+└── /tools        - Various tools
+    ├── deepClone
+    ├── isEqual
+    ├── DOM utilities (isBrowser, checkVisibility, etc.)
+    ├── eventBus (busDispatch, busSubscribe, useEventBus)
+    └── Cache API (storageSetItem, storageGetItem, etc.)
+```
+
+## Browser Compatibility
+
+- Modern browsers with ES2015+ support
+- Cache API requires browser support (Chrome 40+, Firefox 41+, Safari 11.1+)
+- SSR-safe with browser environment detection
 
 ## License
 
-MIT © Pavel Ivanov
+MIT © [Pavel Ivanov](https://github.com/pivanov)

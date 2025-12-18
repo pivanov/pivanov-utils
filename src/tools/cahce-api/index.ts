@@ -11,6 +11,17 @@ export const stringifyBigIntValues = (_key: string, value: unknown) => {
 };
 
 /**
+ * Internal helper to create a consistent cache key URL
+ * Using an absolute URL ensures keys work across different page URLs
+ */
+const createCacheKey = (key: string): string => {
+  if (key.startsWith('http://') || key.startsWith('https://')) {
+    return key;
+  }
+  return `https://cache.internal/${key}`;
+};
+
+/**
  * Set a value in Cache API
  * @param cacheName The name of the cache
  * @param key The key under which the value will be stored
@@ -29,7 +40,8 @@ export const storageSetItem = async (
       'Content-Type': 'application/json',
     },
   });
-  await cache.put(key, response);
+  const cacheKey = createCacheKey(key);
+  await cache.put(new Request(cacheKey), response);
 };
 
 /**
@@ -44,7 +56,8 @@ export const storageGetItem = async <T>(
   key: string,
 ): Promise<T | null> => {
   const cache = await caches.open(cacheName);
-  const response = await cache.match(key);
+  const cacheKey = createCacheKey(key);
+  const response = await cache.match(new Request(cacheKey));
   if (!response) {
     return null;
   }
@@ -64,7 +77,8 @@ export const storageRemoveItem = async (
   key: string,
 ): Promise<boolean> => {
   const cache = await caches.open(cacheName);
-  return await cache.delete(key);
+  const cacheKey = createCacheKey(key);
+  return await cache.delete(new Request(cacheKey));
 };
 
 /**
@@ -115,7 +129,8 @@ export const storageExists = async (
   key: string,
 ): Promise<boolean> => {
   const cache = await caches.open(cacheName);
-  const response = await cache.match(key);
+  const cacheKey = createCacheKey(key);
+  const response = await cache.match(new Request(cacheKey));
   return response !== undefined;
 };
 
@@ -151,9 +166,9 @@ export const storageCalculateSize = async (
 ): Promise<number> => {
   const cache = await caches.open(cacheName);
 
-  // If a specific cacheKey is provided, calculate the size of that entry
   if (cacheKey) {
-    const response = await cache.match(cacheKey);
+    const normalizedKey = createCacheKey(cacheKey);
+    const response = await cache.match(new Request(normalizedKey));
     if (response) {
       const clonedResponse = response.clone();
       const body = await clonedResponse.arrayBuffer();
@@ -162,7 +177,6 @@ export const storageCalculateSize = async (
     return 0;
   }
 
-  // If no cacheKey is provided, calculate the size of all cache entries
   const keys = await cache.keys();
   let totalSize = 0;
 

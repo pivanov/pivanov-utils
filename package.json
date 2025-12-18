@@ -1,6 +1,6 @@
 {
   "name": "@pivanov/utils",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A collection of personal utilities to live a happier life",
   "type": "module",
   "packageManager": "pnpm@9.0.0",
@@ -31,15 +31,13 @@
     "utils",
     "typescript",
     "react",
-    "web-components",
     "dom",
     "cache",
+    "browser cache api",
     "event-bus",
     "string",
     "object",
-    "promise",
-    "r2wc",
-    "react-to-web-component"
+    "promise"
   ],
   "license": "MIT",
   "main": "dist/cjs/index.js",

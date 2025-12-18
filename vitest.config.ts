@@ -4,6 +4,12 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
@@ -15,7 +21,6 @@ export default defineConfig({
         'src/types/**',
         'src/**/*.types.ts',
         'src/**/types.ts',
-        'src/tools/r2wc',
       ],
       reportsDirectory: './coverage',
     },
