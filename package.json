@@ -22,7 +22,8 @@
     "docs:dev": "bun x vitepress dev docs",
     "docs:build": "bun x vitepress build docs",
     "docs:preview": "bun x vitepress preview docs",
-    "prepublishOnly": "bun run build"
+    "prepublishOnly": "bun run build",
+    "publish": "npm publish --access public"
   },
   "author": {
     "name": "Pavel Ivanov",
