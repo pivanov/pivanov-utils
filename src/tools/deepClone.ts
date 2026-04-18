@@ -6,18 +6,17 @@ export const deepClone = <T extends TCloneable>(obj: T): T => {
   return internalDeepClone(obj, new WeakMap());
 };
 
-const internalDeepClone = <T extends TCloneable>(
-  obj: T,
-  seen: WeakMap<object, unknown>,
-): T => {
-  if (obj === null || typeof obj !== 'object') {
+const internalDeepClone = <T extends TCloneable>(obj: T, seen: WeakMap<object, unknown>): T => {
+  if (obj === null || typeof obj !== "object") {
     // Fast path for primitives and null
     return obj;
   }
 
   // Early circular check
   const seenVal = seen.get(obj);
-  if (seenVal) return seenVal as T;
+  if (seenVal) {
+    return seenVal as T;
+  }
 
   // Ultra-fast array path
   if (Array.isArray(obj)) {
@@ -27,7 +26,9 @@ const internalDeepClone = <T extends TCloneable>(
       const arr = new Array(len);
       seen.set(obj, arr);
       for (let i = 0; i < len; i++) {
-        if (i in obj) arr[i] = internalDeepClone(obj[i] as TCloneable, seen);
+        if (i in obj) {
+          arr[i] = internalDeepClone(obj[i] as TCloneable, seen);
+        }
       }
       return arr as unknown as T;
     }
@@ -63,7 +64,9 @@ const internalDeepClone = <T extends TCloneable>(
     } else {
       // Sparse array path
       for (let i = 0; i < len; i++) {
-        if (i in obj) arr[i] = internalDeepClone(obj[i] as TCloneable, seen);
+        if (i in obj) {
+          arr[i] = internalDeepClone(obj[i] as TCloneable, seen);
+        }
       }
     }
     return arr as unknown as T;
@@ -84,7 +87,7 @@ const internalDeepClone = <T extends TCloneable>(
   }
 
   // Handle Buffer and TypedArray
-  if (typeof Buffer !== 'undefined') {
+  if (typeof Buffer !== "undefined") {
     try {
       if (Buffer.isBuffer(obj)) {
         return Buffer.from(obj) as unknown as T;
@@ -100,16 +103,13 @@ const internalDeepClone = <T extends TCloneable>(
   // Handle TypedArrays and DataView
   if (ArrayBuffer.isView(obj)) {
     const TypedArray = obj.constructor as Constructor<ArrayBufferView>;
-    if ('buffer' in obj) {
+    if ("buffer" in obj) {
       const view = obj as {
         buffer: ArrayBuffer;
         byteOffset: number;
         byteLength: number;
       };
-      const newBuffer = view.buffer.slice(
-        view.byteOffset,
-        view.byteOffset + view.byteLength,
-      );
+      const newBuffer = view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength);
       return new TypedArray(newBuffer) as unknown as T;
     }
     const dataView = obj as DataView;
@@ -121,29 +121,17 @@ const internalDeepClone = <T extends TCloneable>(
   }
 
   // Handle Buffer-like objects
-  if (
-    obj &&
-    typeof obj === 'object' &&
-    'buffer' in obj &&
-    'byteLength' in obj
-  ) {
+  if (obj && typeof obj === "object" && "buffer" in obj && "byteLength" in obj) {
     const bufferLike = obj as BufferLike;
-    if (typeof Buffer === 'undefined') {
+    if (typeof Buffer === "undefined") {
       // When Buffer is not available, create a Uint8Array with the same data
-      const view = new Uint8Array(
-        bufferLike.buffer,
-        bufferLike.byteOffset || 0,
-        bufferLike.byteLength,
-      );
+      const view = new Uint8Array(bufferLike.buffer, bufferLike.byteOffset || 0, bufferLike.byteLength);
       const copy = new Uint8Array(view.length);
       copy.set(view);
       return copy as unknown as T;
     }
     const result = {
-      buffer:
-        bufferLike.buffer instanceof ArrayBuffer
-          ? bufferLike.buffer.slice(0)
-          : new ArrayBuffer(bufferLike.byteLength),
+      buffer: bufferLike.buffer instanceof ArrayBuffer ? bufferLike.buffer.slice(0) : new ArrayBuffer(bufferLike.byteLength),
       byteLength: bufferLike.byteLength,
       byteOffset: bufferLike.byteOffset || 0,
       length: bufferLike.length || bufferLike.byteLength,
@@ -218,10 +206,7 @@ const internalDeepClone = <T extends TCloneable>(
           if (descriptor.get || descriptor.set) {
             Object.defineProperty(target, key, descriptor);
           } else {
-            const clonedValue = internalDeepClone(
-              descriptor.value as TCloneable,
-              seen,
-            );
+            const clonedValue = internalDeepClone(descriptor.value as TCloneable, seen);
             Object.defineProperty(target, key, {
               ...descriptor,
               value: clonedValue,
@@ -259,10 +244,7 @@ const internalDeepClone = <T extends TCloneable>(
 
       while (i < len) {
         const key = keys[i++];
-        target[key] = internalDeepClone(
-          (obj as Record<string, unknown>)[key] as TCloneable,
-          seen,
-        );
+        target[key] = internalDeepClone((obj as Record<string, unknown>)[key] as TCloneable, seen);
       }
     }
 
@@ -281,15 +263,14 @@ const internalDeepClone = <T extends TCloneable>(
   for (let i = 0; i < len; i++) {
     const key = keys[i];
     const descriptor = descriptors[key];
-    if (!descriptor.enumerable) continue;
+    if (!descriptor.enumerable) {
+      continue;
+    }
 
     if (descriptor.get || descriptor.set) {
       Object.defineProperty(target, key, descriptor);
     } else {
-      const clonedValue = internalDeepClone(
-        descriptor.value as TCloneable,
-        seen,
-      );
+      const clonedValue = internalDeepClone(descriptor.value as TCloneable, seen);
       Object.defineProperty(target, key, {
         ...descriptor,
         value: clonedValue,
@@ -302,7 +283,9 @@ const internalDeepClone = <T extends TCloneable>(
   for (let i = 0; i < symLen; i++) {
     const sym = symbols[i];
     const descriptor = Object.getOwnPropertyDescriptor(obj, sym);
-    if (!descriptor?.enumerable) continue;
+    if (!descriptor?.enumerable) {
+      continue;
+    }
     Object.defineProperty(target, sym, descriptor);
   }
 

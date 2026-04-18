@@ -1,70 +1,48 @@
-import {
-  act,
-  cleanup,
-  renderHook,
-} from '@testing-library/react';
-import {
-  afterEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, describe, expect, it, mock } from "bun:test";
+import { act, cleanup, renderHook } from "@testing-library/react";
 
-import { busDispatch } from '../';
-import { useEventBus } from '../useEventBus';
+import { busDispatch } from "../";
+import type { TEventBusListener } from "../types";
+import { useEventBus } from "../useEventBus";
 
-import type { TEventBusListener } from '../types';
-
-describe('useEventBus', () => {
+describe("useEventBus", () => {
   afterEach(() => {
     cleanup();
-    vi.clearAllMocks();
   });
 
-  it('should subscribe to events and receive messages', () => {
-    const mockCallback = vi.fn();
-    renderHook(() => useEventBus('test-topic', mockCallback));
-    const message = { data: 'test' };
+  it("subscribes and receives messages", () => {
+    const listener = mock((_msg: unknown) => {});
+    renderHook(() => useEventBus("hook-topic", listener));
 
     act(() => {
-      busDispatch('test-topic', message);
+      busDispatch("hook-topic", { data: "test" });
     });
 
-    expect(mockCallback).toHaveBeenCalledWith(message);
-    expect(mockCallback).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith({ data: "test" });
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  it('should handle invalid inputs', () => {
-    const mockCallback = vi.fn();
-
-    // Test with empty topic
-    renderHook(() => useEventBus('', mockCallback));
-
-    // Test with invalid listener
-    renderHook(() => useEventBus('test-topic', null as unknown as TEventBusListener<unknown>));
+  it("ignores invalid inputs", () => {
+    const listener = mock((_msg: unknown) => {});
+    renderHook(() => useEventBus("", listener));
+    renderHook(() => useEventBus("hook-topic", null as unknown as TEventBusListener<unknown>));
 
     act(() => {
-      busDispatch('test-topic', 'test');
+      busDispatch("hook-topic", "test");
     });
 
-    expect(mockCallback).not.toHaveBeenCalled();
+    expect(listener).not.toHaveBeenCalled();
   });
 
-  it('should properly cleanup on unmount', () => {
-    const mockCallback = vi.fn();
-    const { unmount } = renderHook(() =>
-      useEventBus('test-topic', mockCallback),
-    );
-
+  it("unsubscribes on unmount", () => {
+    const listener = mock((_msg: unknown) => {});
+    const { unmount } = renderHook(() => useEventBus("hook-topic", listener));
     unmount();
 
     act(() => {
-      busDispatch('test-topic', 'test');
+      busDispatch("hook-topic", "test");
     });
 
-    expect(mockCallback).not.toHaveBeenCalled();
+    expect(listener).not.toHaveBeenCalled();
   });
-
-  // Add more test cases as needed
 });

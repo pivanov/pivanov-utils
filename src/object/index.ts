@@ -1,202 +1,216 @@
-import { isObject } from '../assertion';
-import type { TDict } from '../types';
+import { isObject } from "../assertion";
+import type { TDict } from "../types";
 
 /**
  * Creates a new object with the specified keys removed.
  *
- * @param object - The source object
- * @param keys - Array of keys to remove from the object
- * @returns A new object without the specified keys
- *
  * @example
  * ```ts
- * const user = { name: 'John', age: 30, email: 'john@example.com' };
- *
- * omit(user, ['email', 'age'])
- * // { name: 'John' }
- *
- * // Preserves original object
- * omit(user, ['email'])
- * // { name: 'John', age: 30 }
- * // user is unchanged
- *
- * // Handles non-existent keys
- * omit(user, ['nonexistent'])
- * // { name: 'John', age: 30, email: 'john@example.com' }
+ * omit({ name: 'John', age: 30 }, ['age']); // { name: 'John' }
  * ```
- *
- * @bestPractice
- * - Use when you need to create a new object without certain properties
- * - Prefer this over manually deleting properties when immutability is needed
- * - Consider using TypeScript's Omit utility type with this function
- * - For picking specific properties, use the pick function instead
  */
-export const omit = <T extends TDict, K extends keyof T>(
-  object: T,
-  keys: K[],
-) => {
-  return keys.reduce(
-    (acc, key) => {
-      delete acc[key];
-      return acc;
-    },
-    { ...object },
-  ) as Omit<T, K>;
+export const omit = <T extends TDict, K extends keyof T>(object: T, keys: K[]): Omit<T, K> => {
+  const result = { ...object };
+  for (const key of keys) {
+    delete result[key];
+  }
+  return result as Omit<T, K>;
 };
 
 /**
  * Creates a new object with only the specified keys.
  *
- * @param object - The source object
- * @param keys - Array of keys to keep in the new object
- * @returns A new object containing only the specified keys
- *
  * @example
  * ```ts
- * const user = { name: 'John', age: 30, email: 'john@example.com' };
- *
- * pick(user, ['name', 'email'])
- * // { name: 'John', email: 'john@example.com' }
- *
- * // Handles missing keys
- * pick(user, ['name', 'nonexistent'])
- * // { name: 'John' }
- *
- * // Empty keys array
- * pick(user, [])
- * // {}
+ * pick({ name: 'John', age: 30 }, ['name']); // { name: 'John' }
  * ```
- *
- * @bestPractice
- * - Use when you need to create a new object with only specific properties
- * - Useful for API responses where you only want to expose certain fields
- * - Consider using TypeScript's Pick utility type with this function
- * - For removing specific properties, use the omit function instead
  */
-export const pick = <T extends TDict, K extends keyof T>(
-  object: T,
-  keys: K[],
-) => {
-  const result = {} as { [P in K]: T[P] };
-
+export const pick = <T extends TDict, K extends keyof T>(object: T, keys: K[]): Pick<T, K> => {
+  const result = {} as Pick<T, K>;
   for (const key of keys) {
     if (key in object) {
       result[key] = object[key];
     }
   }
-
   return result;
 };
 
 /**
- * Merges multiple objects into a target object.
- * Performs a shallow merge.
- *
- * @param target - The target object to merge into
- * @param sources - The source objects to merge from
- * @returns The merged object (same reference as target)
+ * Returns a new object keeping entries where the predicate returns true.
  *
  * @example
  * ```ts
- * // Basic merge
- * merge({ a: 1 }, { b: 2 })
- * // { a: 1, b: 2 }
- *
- * // Multiple sources
- * merge({ a: 1 }, { b: 2 }, { c: 3 })
- * // { a: 1, b: 2, c: 3 }
- *
- * // Property override
- * merge({ a: 1, b: 1 }, { b: 2 }, { b: 3 })
- * // { a: 1, b: 3 }
- *
- * // Shallow merge (nested objects are referenced)
- * const obj = { nested: { a: 1 } };
- * merge({ x: 1 }, obj).nested === obj.nested
- * // true
+ * pickBy({ a: 1, b: 2, c: 3 }, (v) => v > 1); // { b: 2, c: 3 }
  * ```
- *
- * @bestPractice
- * - Use for simple object merging where nested objects don't need to be cloned
- * - Be aware that nested objects are shared by reference
- * - For deep merging, use the deepMerge function instead
- * - Consider using the spread operator (...) for simpler cases
  */
-export const merge = <T extends object>(
-  target: T,
-  ...sources: Partial<T>[]
-): T => {
-  return Object.assign(target, ...sources);
+export const pickBy = <T extends TDict>(object: T, predicate: (value: T[keyof T], key: keyof T) => boolean): Partial<T> => {
+  const result: Partial<T> = {};
+  for (const key of Object.keys(object) as (keyof T)[]) {
+    if (predicate(object[key], key)) {
+      result[key] = object[key];
+    }
+  }
+  return result;
 };
 
 /**
- * Deep merges multiple objects into a target object.
- * Recursively merges nested objects and arrays.
- *
- * @param target - The target object to merge into
- * @param sources - The source objects to merge from
- * @returns The deep merged object (same reference as target)
+ * Returns a new object dropping entries where the predicate returns true.
  *
  * @example
  * ```ts
- * // Deep merge nested objects
- * deepMerge(
- *   { a: { b: 1, c: 2 } },
- *   { a: { d: 3 } },
- *   { a: { e: 4 } }
- * )
- * // { a: { b: 1, c: 2, d: 3, e: 4 } }
- *
- * // Handles nested property override
- * deepMerge(
- *   { a: { b: 1 } },
- *   { a: { b: 2 } }
- * )
- * // { a: { b: 2 } }
- *
- * // Mixed nested and top-level properties
- * deepMerge(
- *   { a: 1, b: { c: 2 } },
- *   { b: { d: 3 }, e: 4 }
- * )
- * // { a: 1, b: { c: 2, d: 3 }, e: 4 }
- *
- * // Handles undefined sources
- * deepMerge({ a: 1 }, undefined)
- * // { a: 1 }
+ * omitBy({ a: 1, b: null, c: 3 }, (v) => v === null); // { a: 1, c: 3 }
  * ```
- *
- * @bestPractice
- * - Use when you need to merge objects with nested structures
- * - Be aware that this creates new objects for nested properties
- * - For simple flat objects, use the merge function instead
- * - Consider performance implications for deeply nested objects
- * - Handle circular references if they might occur in your data
  */
-export const deepMerge = <T extends object>(
-  target: T,
-  ...sources: Partial<T>[]
-): T => {
-  if (!sources.length) return target;
-  const source = sources.shift();
-  if (source === undefined) return target;
+export const omitBy = <T extends TDict>(object: T, predicate: (value: T[keyof T], key: keyof T) => boolean): Partial<T> => {
+  return pickBy(object, (value, key) => !predicate(value, key));
+};
 
-  if (isObject(target) && isObject(source)) {
+/**
+ * Returns a new object with values mapped via the transform function.
+ *
+ * @example
+ * ```ts
+ * mapValues({ a: 1, b: 2 }, (v) => v * 2); // { a: 2, b: 4 }
+ * ```
+ */
+export const mapValues = <T extends TDict, R>(object: T, mapper: (value: T[keyof T], key: keyof T) => R): Record<keyof T, R> => {
+  const result = {} as Record<keyof T, R>;
+  for (const key of Object.keys(object) as (keyof T)[]) {
+    result[key] = mapper(object[key], key);
+  }
+  return result;
+};
+
+/**
+ * Returns a new object with keys mapped via the transform function.
+ *
+ * @example
+ * ```ts
+ * mapKeys({ a: 1, b: 2 }, (_, k) => k.toUpperCase()); // { A: 1, B: 2 }
+ * ```
+ */
+export const mapKeys = <T extends TDict>(object: T, mapper: (value: T[keyof T], key: keyof T) => string): Record<string, T[keyof T]> => {
+  const result: Record<string, T[keyof T]> = {};
+  for (const key of Object.keys(object) as (keyof T)[]) {
+    result[mapper(object[key], key)] = object[key];
+  }
+  return result;
+};
+
+/**
+ * Groups items by the key returned by the iteratee.
+ *
+ * @example
+ * ```ts
+ * groupBy(['apple', 'banana', 'cherry'], (s) => s[0]);
+ * // { a: ['apple'], b: ['banana'], c: ['cherry'] }
+ * ```
+ */
+export const groupBy = <T, K extends string | number>(items: readonly T[], iteratee: (item: T, index: number) => K): Record<K, T[]> => {
+  const result = {} as Record<K, T[]>;
+  items.forEach((item, index) => {
+    const key = iteratee(item, index);
+    if (result[key]) {
+      result[key].push(item);
+    } else {
+      result[key] = [item];
+    }
+  });
+  return result;
+};
+
+/**
+ * Swaps keys with values. Values must be valid object keys.
+ *
+ * @example
+ * ```ts
+ * invert({ a: 'x', b: 'y' }); // { x: 'a', y: 'b' }
+ * ```
+ */
+export const invert = <K extends string, V extends string | number | symbol>(object: Record<K, V>): Record<V, K> => {
+  const result = {} as Record<V, K>;
+  for (const key of Object.keys(object) as K[]) {
+    result[object[key]] = key;
+  }
+  return result;
+};
+
+/**
+ * Typed `Object.hasOwn`. Narrows the key into the object's own keys.
+ *
+ * @example
+ * ```ts
+ * if (hasOwn(obj, 'name')) obj.name; // narrowed
+ * ```
+ */
+export const hasOwn = <T extends object, K extends PropertyKey>(object: T, key: K): object is T & Record<K, unknown> => {
+  return Object.hasOwn(object, key);
+};
+
+/**
+ * Typed `Object.keys`. Returns `(keyof T)[]` instead of `string[]`.
+ *
+ * Note: like `Object.keys`, the runtime keys are just the own enumerable
+ * string keys, so this typing can be unsound if the object has extra runtime
+ * properties not in its compile-time type.
+ */
+export const keysOf = <T extends object>(object: T): (keyof T)[] => {
+  return Object.keys(object) as (keyof T)[];
+};
+
+/**
+ * Typed `Object.entries`. Returns `[keyof T, T[keyof T]][]`.
+ */
+export const entriesOf = <T extends object>(object: T): [keyof T, T[keyof T]][] => {
+  return Object.entries(object) as [keyof T, T[keyof T]][];
+};
+
+/**
+ * Typed `Object.fromEntries` for tuple arrays with literal key types.
+ */
+export const fromEntries = <K extends PropertyKey, V>(entries: readonly (readonly [K, V])[]): Record<K, V> => {
+  return Object.fromEntries(entries) as Record<K, V>;
+};
+
+/**
+ * Shallow-merges multiple objects into a new object. Does not mutate inputs.
+ *
+ * @example
+ * ```ts
+ * merge({ a: 1 }, { b: 2 }, { c: 3 }); // { a: 1, b: 2, c: 3 }
+ * ```
+ */
+export const merge = <T extends object>(target: T, ...sources: Partial<T>[]): T => {
+  return Object.assign({}, target, ...sources);
+};
+
+/**
+ * Recursively merges multiple objects into a new object. Does not mutate
+ * inputs. Nested plain objects are merged; arrays and other values replace.
+ *
+ * @example
+ * ```ts
+ * deepMerge({ a: { b: 1 } }, { a: { c: 2 } }); // { a: { b: 1, c: 2 } }
+ * ```
+ */
+export const deepMerge = <T extends object>(target: T, ...sources: Partial<T>[]): T => {
+  const result: Record<string, unknown> = { ...(target as object) };
+
+  for (const source of sources) {
+    if (source === undefined) {
+      continue;
+    }
     for (const key of Object.keys(source)) {
-      const sourceValue = source[key as keyof T];
+      const sourceValue = (source as Record<string, unknown>)[key];
+      const targetValue = result[key];
+
       if (isObject(sourceValue)) {
-        if (!target[key as keyof T]) {
-          Object.assign(target, { [key]: {} });
-        }
-        const targetValue = target[key as keyof T];
-        if (isObject(targetValue)) {
-          deepMerge(targetValue as object, sourceValue as object);
-        }
+        result[key] = deepMerge(isObject(targetValue) ? targetValue : {}, sourceValue);
       } else {
-        Object.assign(target, { [key]: sourceValue });
+        result[key] = sourceValue;
       }
     }
   }
 
-  return deepMerge(target, ...sources);
+  return result as T;
 };

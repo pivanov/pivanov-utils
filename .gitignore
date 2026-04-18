@@ -41,3 +41,14 @@ jspm_packages
 .DS_Store
 
 /dist
+
+# VitePress
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+
+# Local agent tooling
+.claude/
+CLAUDE.md
+
+# Tarballs
+*.tgz

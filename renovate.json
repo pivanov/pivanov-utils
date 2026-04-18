@@ -1,33 +1,31 @@
 {
-    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "baseBranches": ["main", "landingpage"],
-    "extends": ["config:base"],
-    "dependencyDashboard": false,
-    "bumpVersion": "patch",
-    "rangeStrategy": "bump",
-    "ignorePaths": [".github/**"],
-    "branchPrefix": "renovate_",
-    "vulnerabilityAlerts": {
-        "enabled": false
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:base", ":semanticCommits"],
+  "baseBranches": ["main"],
+  "dependencyDashboard": true,
+  "rangeStrategy": "bump",
+  "branchPrefix": "renovate/",
+  "schedule": ["before 6am on monday"],
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true,
+      "groupName": "non-major updates"
     },
-    "packageRules": [
-      {
-        "packagePatterns": [
-          "*"
-        ],
-        "excludePackagePatterns": [],
-        "enabled": false
-      },
-      {
-        "packagePatterns": [],
-        "matchUpdateTypes": [
-          "minor",
-          "patch"
-        ],
-        "automerge": true,
-        "automergeType": "pr",
-        "platformAutomerge": true,
-        "groupName": "pivanov_utils_update"
-      }
-    ]
+    {
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "dependencyDashboardApproval": true
+    },
+    {
+      "matchDepTypes": ["peerDependencies"],
+      "enabled": false
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security"]
+  }
 }

@@ -1,60 +1,28 @@
 /**
- * Converts a string to camelCase format.
- *
- * @param str - The input string to convert
- * @returns The string in camelCase format
+ * Converts a string to camelCase.
  *
  * @example
  * ```ts
- * camelCase('foo-bar')      // 'fooBar'
- * camelCase('FOO_BAR')      // 'fooBar'
- * camelCase('Foo Bar')      // 'fooBar'
- * camelCase('foo bar baz')  // 'fooBarBaz'
- * camelCase('  foo  bar  ') // 'fooBar'
- *
- * // Handles special cases
- * camelCase('')            // ''
- * camelCase('123')         // '123'
- * camelCase('foo--bar')    // 'fooBar'
+ * camelCase('foo-bar');  // 'fooBar'
+ * camelCase('FOO_BAR');  // 'fooBar'
  * ```
- *
- * @bestPractice
- * - Use for JavaScript/TypeScript variable and property names
- * - Ideal for internal object properties and method names
- * - Avoid using with user-facing text or URLs (use kebab-case instead)
  */
 export const camelCase = (str: string): string => {
   return str
     .trim()
     .toLowerCase()
-    .replace(/^[-_\s]+/, '')
-    .replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''));
+    .replace(/^[-_\s]+/, "")
+    .replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ""));
 };
 
 /**
- * Converts a string to PascalCase format.
- *
- * @param str - The input string to convert
- * @returns The string in PascalCase format
+ * Converts a string to PascalCase.
  *
  * @example
  * ```ts
- * pascalCase('foo-bar')     // 'FooBar'
- * pascalCase('foo_bar')     // 'FooBar'
- * pascalCase('foo bar')     // 'FooBar'
- * pascalCase('foo123bar')   // 'Foo123Bar'
- *
- * // Handles numbers and special cases
- * pascalCase('123foo')      // '123Foo'
- * pascalCase('FOO_BAR_BAZ') // 'FooBarBaz'
- * pascalCase('')            // ''
+ * pascalCase('foo-bar');      // 'FooBar'
+ * pascalCase('foo123bar');    // 'Foo123Bar'
  * ```
- *
- * @bestPractice
- * - Use for TypeScript/JavaScript class names
- * - Use for React component names
- * - Use for type and interface names in TypeScript
- * - Avoid for variable names or object properties (use camelCase instead)
  */
 export const pascalCase = (str: string): string => {
   return str
@@ -62,161 +30,196 @@ export const pascalCase = (str: string): string => {
     .filter(Boolean)
     .map((w) => w.toLowerCase())
     .map((w) => `${w.charAt(0).toUpperCase()}${w.slice(1)}`)
-    .join('');
+    .join("");
 };
 
 /**
- * Capitalizes the first letter of a string.
- *
- * @param string - The input string to capitalize
- * @returns The string with its first letter capitalized
- *
- * @example
- * ```ts
- * capitalizeFirstLetter('hello')              // 'Hello'
- * capitalizeFirstLetter('hello world')        // 'Hello world'
- * capitalizeFirstLetter('already Capitalized') // 'Already Capitalized'
- * capitalizeFirstLetter('')                   // ''
- * ```
- *
- * @bestPractice
- * - Use for simple text formatting where only the first letter needs capitalization
- * - For title formatting, consider creating a separate titleCase function
- * - For component or class names, use pascalCase instead
+ * Capitalizes the first character of a string (runtime).
+ * For TypeScript literal-type preservation, use `capitalize` instead.
  */
-export const capitalizeFirstLetter = (string: string) =>
-  string.charAt(0).toUpperCase() + string.slice(1);
+export const capitalizeFirstLetter = (string: string): string => string.charAt(0).toUpperCase() + string.slice(1);
 
 /**
- * Converts a string to kebab-case format.
- *
- * @param str - The input string to convert
- * @returns The string in kebab-case format, or the original input if null/undefined
+ * Converts a string to kebab-case.
  *
  * @example
  * ```ts
- * kebabCase('fooBar')           // 'foo-bar'
- * kebabCase('XMLHttpRequest')   // 'xml-http-request'
- * kebabCase('AAABBBCcc')       // 'aaabbb-ccc'
- *
- * // Handles special characters and accents
- * kebabCase('é è à ù')         // 'e-e-a-u'
- * kebabCase('foo@#$%bar&*^baz') // 'foo-bar-baz'
- *
- * // Special cases
- * kebabCase('')                // ''
- * kebabCase(null)              // null
- * kebabCase(undefined)         // undefined
+ * kebabCase('fooBar');         // 'foo-bar'
+ * kebabCase('XMLHttpRequest'); // 'xml-http-request'
  * ```
- *
- * @bestPractice
- * - Use for URL slugs and routes
- * - Use for CSS class names and HTML attributes
- * - Use for file names in web projects
- * - Consider using slugify for full URL-safe string conversion
  */
 export const kebabCase = (str: string): string => {
-  if (str == null) return str;
+  if (str == null) {
+    return str;
+  }
   return str
-    .normalize('NFKD')
-    .replace(/\p{Diacritic}/gu, '')
-    .replace(/[^\w\s-]/g, ' ')
-    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-    .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
-    .replace(/[-_\s]+/g, '-')
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^\w\s-]/g, " ")
+    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+    .replace(/([A-Z])([A-Z][a-z])/g, "$1-$2")
+    .replace(/[-_\s]+/g, "-")
     .toLowerCase()
-    .replace(/^-+|-+$/g, '')
+    .replace(/^-+|-+$/g, "")
     .trim();
 };
 
 /**
- * Converts a string into a URL-friendly slug.
- * More aggressive than kebabCase, removing all special characters.
- *
- * @param str - The input string to convert
- * @returns A URL-safe lowercase string with:
- *  - Unicode characters normalized and diacritics removed
- *  - Special characters removed
- *  - Spaces, underscores, and multiple hyphens converted to single hyphens
- *  - Leading and trailing hyphens removed
+ * Converts a string to snake_case.
  *
  * @example
  * ```ts
- * slugify('Hello World!')          // 'hello-world'
- * slugify('Über Café')             // 'uber-cafe'
- * slugify('__FOO--BAR  ')          // 'foo-bar'
- * slugify('Complex@#$%^&* String') // 'complex-string'
- *
- * // Special cases
- * slugify('한글')                   // '' (removes non-Latin characters)
- * slugify('foo@#$%bar&*^baz')     // 'foobarbaz'
- * slugify('')                      // ''
+ * snakeCase('fooBar');         // 'foo_bar'
+ * snakeCase('XMLHttpRequest'); // 'xml_http_request'
  * ```
- *
- * @bestPractice
- * - Use for generating URL-safe slugs
- * - Use when you need to remove all special characters
- * - For CSS classes or less strict conversions, use kebabCase instead
- * - Consider the target audience when handling non-Latin characters
  */
-export const slugify = (str: string): string => {
+export const snakeCase = (str: string): string => {
+  if (str == null) {
+    return str;
+  }
   return str
-    .normalize('NFKD')
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^\w\s-]/g, " ")
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/([A-Z])([A-Z][a-z])/g, "$1_$2")
+    .replace(/[-_\s]+/g, "_")
     .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[-\s_]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/^_+|_+$/g, "")
+    .trim();
 };
 
 /**
- * Capitalizes the first character of a string, maintaining TypeScript's type inference.
- *
- * @param str - The input string to capitalize
- * @returns The string with its first character capitalized
+ * Converts a string to Title Case - each word capitalized, separators
+ * normalized to single spaces.
  *
  * @example
  * ```ts
- * capitalize('hello')  // 'Hello'
- * capitalize('world')  // 'World'
- * capitalize('')      // ''
- *
- * // TypeScript type inference
- * const str: 'hello' = 'hello';
- * const capitalized = capitalize(str); // Type is Capitalize<'hello'>
+ * titleCase('hello world');       // 'Hello World'
+ * titleCase('foo-bar_baz');       // 'Foo Bar Baz'
  * ```
+ */
+export const titleCase = (str: string): string => {
+  return str
+    .normalize("NFKD")
+    .replace(/[^\w\s-]/g, " ")
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+};
+
+/**
+ * Converts a string into a URL-friendly slug. More aggressive than
+ * `kebabCase` - strips all non-ASCII-word characters.
  *
- * @bestPractice
- * - Use when you need to preserve TypeScript's literal types
- * - For runtime-only capitalization, use capitalizeFirstLetter instead
- * - Consider creating a separate titleCase function for more complex capitalizations
+ * @example
+ * ```ts
+ * slugify('Hello World!');     // 'hello-world'
+ * slugify('Über Café');         // 'uber-cafe'
+ * ```
+ */
+export const slugify = (str: string): string => {
+  return str
+    .normalize("NFKD")
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[-\s_]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+};
+
+/**
+ * Capitalizes the first character; preserves TypeScript literal types.
  */
 export const capitalize = <S extends string>(str: S): Capitalize<S> => {
   return (str.charAt(0).toUpperCase() + str.slice(1)) as Capitalize<S>;
 };
 
 /**
- * Uncapitalizes the first character of a string, maintaining TypeScript's type inference.
- *
- * @param str - The input string to uncapitalize
- * @returns The string with its first character in lowercase
- *
- * @example
- * ```ts
- * uncapitalize('Hello')  // 'hello'
- * uncapitalize('World')  // 'world'
- * uncapitalize('')      // ''
- *
- * // TypeScript type inference
- * const str: 'Hello' = 'Hello';
- * const uncapitalized = uncapitalize(str); // Type is Uncapitalize<'Hello'>
- * ```
- *
- * @bestPractice
- * - Use when you need to preserve TypeScript's literal types
- * - For runtime-only uncapitalization, consider creating a simpler function
- * - Useful for converting PascalCase to camelCase while maintaining type information
+ * Lower-cases the first character; preserves TypeScript literal types.
  */
 export const uncapitalize = <S extends string>(str: S): Uncapitalize<S> => {
   return (str.charAt(0).toLowerCase() + str.slice(1)) as Uncapitalize<S>;
+};
+
+/**
+ * Truncates a string to `maxLength` characters, appending an ellipsis
+ * (default `…`) if truncation happened. The ellipsis is included in
+ * the final length.
+ *
+ * @example
+ * ```ts
+ * truncate('Hello, world!', 8);        // 'Hello, …'
+ * truncate('Hello, world!', 8, '...'); // 'Hello...'
+ * truncate('Short', 20);               // 'Short'
+ * ```
+ */
+export const truncate = (str: string, maxLength: number, ellipsis = "…"): string => {
+  if (str.length <= maxLength) {
+    return str;
+  }
+  if (maxLength <= ellipsis.length) {
+    return ellipsis.slice(0, maxLength);
+  }
+  return str.slice(0, maxLength - ellipsis.length) + ellipsis;
+};
+
+const HTML_ESCAPE_MAP: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
+
+/**
+ * Escapes HTML special characters for safe interpolation into markup.
+ *
+ * @example
+ * ```ts
+ * escapeHtml('<script>alert(1)</script>');
+ * // '&lt;script&gt;alert(1)&lt;/script&gt;'
+ * ```
+ */
+export const escapeHtml = (str: string): string => {
+  return str.replace(/[&<>"']/g, (ch) => HTML_ESCAPE_MAP[ch]);
+};
+
+/**
+ * Escapes characters that have special meaning in a regular expression so the
+ * string can be safely embedded as a literal match.
+ *
+ * @example
+ * ```ts
+ * new RegExp(escapeRegExp('a.b*c')); // matches the literal "a.b*c"
+ * ```
+ */
+export const escapeRegExp = (str: string): string => {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
+/**
+ * Splits a string into words by whitespace, dashes, and underscores.
+ * Preserves case; filters out empty segments.
+ *
+ * @example
+ * ```ts
+ * words('hello_world-foo bar'); // ['hello', 'world', 'foo', 'bar']
+ * ```
+ */
+export const words = (str: string): string[] => {
+  return str.split(/[-_\s]+/).filter(Boolean);
+};
+
+/**
+ * Splits a string by line breaks (`\r\n`, `\n`, or `\r`).
+ *
+ * @example
+ * ```ts
+ * lines('a\nb\r\nc'); // ['a', 'b', 'c']
+ * ```
+ */
+export const lines = (str: string): string[] => {
+  return str.split(/\r\n|\r|\n/);
 };

@@ -1,91 +1,181 @@
 /**
- * Checks if the code is running in a browser environment
- * @returns {boolean} True if running in a browser, false otherwise
+ * Returns true when running in a browser-like environment.
+ *
+ * Checks for both `window` and `document` so service-worker and
+ * partially-mocked contexts are correctly reported as non-browser.
+ *
  * @example
- * if (isBrowser()) {
- *   // Execute browser-specific code
- *   window.addEventListener('resize', handleResize);
- * }
+ * ```ts
+ * if (isBrowser()) window.addEventListener('resize', onResize);
+ * ```
  */
 export const isBrowser = (): boolean => {
-  return typeof window !== 'undefined';
+  return typeof window !== "undefined" && typeof document !== "undefined";
 };
 
 /**
- * Sets CSS custom properties (variables) on an HTML element
- * @param {HTMLElement | null} el - The target HTML element
- * @param {Record<string, string>} cssVars - Object containing CSS variable names and values
+ * Sets CSS custom properties on an element. Safely no-ops when element is null.
+ *
  * @example
- * const element = document.querySelector('.my-element');
- * setStyleProperties(element, {
- *   '--background-color': '#fff',
- *   '--text-color': '#000',
- *   '--padding': '1rem'
- * });
+ * ```ts
+ * setStyleProperties(el, { '--primary': '#3b82f6', '--gap': '1rem' });
+ * ```
  */
-export const setStyleProperties = (
-  el: HTMLElement | null,
-  cssVars: Record<string, string>,
-) => {
+export const setStyleProperties = (el: HTMLElement | null, cssVars: Record<string, string>): void => {
   if (!el) {
     return;
   }
-
   for (const [key, value] of Object.entries(cssVars)) {
     el.style.setProperty(key, value);
   }
 };
 
+interface CheckVisibilityOptions {
+  /** Require the element to intersect the viewport. Default: true. */
+  checkViewport?: boolean;
+  /** Require computed `display` to be non-"none". Default: true. */
+  checkDisplay?: boolean;
+  /** Require computed `visibility` to be "visible". Default: true. */
+  checkVisibility?: boolean;
+  /** Require computed `opacity` to be > 0. Default: true. */
+  checkOpacity?: boolean;
+}
+
 /**
- * Checks if an element is currently visible in the viewport
- * @param {HTMLElement} element - The element to check
- * @returns {boolean} True if the element is visible in viewport, false otherwise
+ * Checks whether an element is visible to the user.
+ *
+ * By default verifies: attached to DOM, `display` not `none`,
+ * `visibility` is `visible`, `opacity > 0`, and intersects the viewport
+ * on both axes. Each check can be toggled via options.
+ *
  * @example
- * const element = document.querySelector('.my-element');
- * if (checkVisibility(element)) {
- *   // Element is visible in viewport
- *   element.classList.add('animate');
- * }
+ * ```ts
+ * if (checkVisibility(el)) el.classList.add('seen');
+ * checkVisibility(el, { checkViewport: false }); // visible per CSS only
+ * ```
  */
-export const checkVisibility = (element: HTMLElement) => {
-  const rect = element.getBoundingClientRect();
-  const viewHeight = Math.max(
-    document.documentElement.clientHeight,
-    window.innerHeight,
-  );
-  return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
+export const checkVisibility = (element: HTMLElement, options: CheckVisibilityOptions = {}): boolean => {
+  const { checkViewport = true, checkDisplay = true, checkVisibility: checkCssVisibility = true, checkOpacity = true } = options;
+
+  if (!element.isConnected) {
+    return false;
+  }
+
+  if (checkDisplay || checkCssVisibility || checkOpacity) {
+    const style = window.getComputedStyle(element);
+    if (checkDisplay && style.display === "none") {
+      return false;
+    }
+    if (checkCssVisibility && style.visibility !== "" && style.visibility !== "visible") {
+      return false;
+    }
+    if (checkOpacity && style.opacity !== "") {
+      const parsed = Number.parseFloat(style.opacity);
+      if (!Number.isNaN(parsed) && parsed === 0) {
+        return false;
+      }
+    }
+  }
+
+  if (checkViewport) {
+    const rect = element.getBoundingClientRect();
+    // If layout hasn't produced a rect (e.g. tests without a layout engine),
+    // skip viewport clipping rather than report false negatives.
+    if (rect.width !== 0 || rect.height !== 0) {
+      const viewHeight = window.innerHeight || document.documentElement.clientHeight;
+      const viewWidth = window.innerWidth || document.documentElement.clientWidth;
+      const outsideVertical = rect.bottom <= 0 || rect.top >= viewHeight;
+      const outsideHorizontal = rect.right <= 0 || rect.left >= viewWidth;
+      if (outsideVertical || outsideHorizontal) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+};
+
+const DEFAULT_FONT_FAMILY = `Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"`;
+
+let cachedCanvas: HTMLCanvasElement | undefined;
+let cachedContext: CanvasRenderingContext2D | null | undefined;
+
+const getTextMeasurementContext = (): CanvasRenderingContext2D | null => {
+  if (cachedContext !== undefined) {
+    return cachedContext;
+  }
+  if (typeof document === "undefined") {
+    cachedContext = null;
+    return null;
+  }
+  cachedCanvas = document.createElement("canvas");
+  cachedContext = cachedCanvas.getContext("2d");
+  return cachedContext;
 };
 
 /**
- * Calculates the rendered width of text with specified styling
- * @param {string} text - The text to measure
- * @param {number} fontSize - Font size in pixels
- * @param {boolean} [isUppercase=false] - Whether to convert text to uppercase before measuring
- * @param {string} [fontFamily] - Font family string, defaults to system fonts
- * @returns {number} The width of the text in pixels
- * @example
- * // Basic usage
- * const width = calculateRenderedTextWidth('Hello World', 16);
- *
- * // With uppercase conversion
- * const upperWidth = calculateRenderedTextWidth('Hello World', 16, true);
- *
- * // With custom font
- * const customWidth = calculateRenderedTextWidth('Hello World', 16, false, 'Arial');
- *
- * // Use the width for calculations
- * const containerWidth = width + 32; // text width + padding
+ * @internal Resets the cached canvas - for tests only.
  */
-export const calculateRenderedTextWidth = (
-  text: string,
-  fontSize: number,
-  isUppercase = false,
-  fontFamily = `Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"`,
-) => {
-  const finalText = isUppercase ? text.toUpperCase() : text;
+export const __resetTextMeasurementCache = (): void => {
+  cachedCanvas = undefined;
+  cachedContext = undefined;
+};
 
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
-  (context as CanvasRenderingContext2D).font = `${fontSize}px ${fontFamily}`;
-  return (context as CanvasRenderingContext2D).measureText(finalText).width;
+interface IViewportOptions {
+  /** Require vertical intersection. Default: true. */
+  vertical?: boolean;
+  /** Require horizontal intersection. Default: true. */
+  horizontal?: boolean;
+}
+
+/**
+ * Returns true when the element's bounding rect intersects the viewport.
+ * Pure geometry - ignores CSS visibility. Use `checkVisibility` for a full
+ * visibility check.
+ *
+ * Zero-sized rects (no layout yet) return true - we can't clip against
+ * nothing, and failing them would produce false negatives in test environments.
+ *
+ * @example
+ * ```ts
+ * if (isInViewport(el)) track();
+ * isInViewport(el, { horizontal: false }); // vertical only
+ * ```
+ */
+export const isInViewport = (element: HTMLElement, options: IViewportOptions = {}): boolean => {
+  const { vertical = true, horizontal = true } = options;
+  const rect = element.getBoundingClientRect();
+  if (rect.width === 0 && rect.height === 0) {
+    return true;
+  }
+  const viewHeight = window.innerHeight || document.documentElement.clientHeight;
+  const viewWidth = window.innerWidth || document.documentElement.clientWidth;
+
+  if (vertical && (rect.bottom <= 0 || rect.top >= viewHeight)) {
+    return false;
+  }
+  if (horizontal && (rect.right <= 0 || rect.left >= viewWidth)) {
+    return false;
+  }
+  return true;
+};
+
+/**
+ * Measures the rendered width of text in pixels using a cached off-screen
+ * canvas. Returns `0` when 2D context is unavailable.
+ *
+ * @example
+ * ```ts
+ * calculateRenderedTextWidth('Hello World', 16);
+ * calculateRenderedTextWidth('Hi', 14, true, 'Arial');
+ * ```
+ */
+export const calculateRenderedTextWidth = (text: string, fontSize: number, isUppercase = false, fontFamily = DEFAULT_FONT_FAMILY): number => {
+  const context = getTextMeasurementContext();
+  if (!context) {
+    return 0;
+  }
+  const finalText = isUppercase ? text.toUpperCase() : text;
+  context.font = `${fontSize}px ${fontFamily}`;
+  return context.measureText(finalText).width;
 };

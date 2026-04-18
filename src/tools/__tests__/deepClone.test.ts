@@ -1,25 +1,21 @@
-import {
-  describe,
-  expect,
-  it,
-} from 'vitest';
+import { describe, expect, it } from "bun:test";
 
-import { deepClone } from '../deepClone';
+import { deepClone } from "../deepClone";
 
-describe('deepClone', () => {
-  it('should handle primitive values', () => {
+describe("deepClone", () => {
+  it("should handle primitive values", () => {
     expect(deepClone(null)).toBe(null);
     expect(deepClone(undefined)).toBe(undefined);
     expect(deepClone(42)).toBe(42);
-    expect(deepClone('hello')).toBe('hello');
+    expect(deepClone("hello")).toBe("hello");
     expect(deepClone(true)).toBe(true);
-    const sym = Symbol('test');
+    const sym = Symbol("test");
     expect(deepClone(sym)).toBe(sym);
     const big = BigInt(42);
     expect(deepClone(big)).toBe(big);
   });
 
-  it('should handle circular references', () => {
+  it("should handle circular references", () => {
     interface CircularRef {
       a: number;
       self?: CircularRef;
@@ -31,15 +27,15 @@ describe('deepClone', () => {
     expect(cloned.self).toBe(cloned);
   });
 
-  it('should handle Buffer', () => {
-    const buf = Buffer.from('test');
+  it("should handle Buffer", () => {
+    const buf = Buffer.from("test");
     const cloned = deepClone(buf);
     expect(Buffer.isBuffer(cloned)).toBe(true);
-    expect(cloned.toString()).toBe('test');
+    expect(cloned.toString()).toBe("test");
     expect(cloned).not.toBe(buf);
   });
 
-  it('should handle built-in types', () => {
+  it("should handle built-in types", () => {
     // Date
     const date = new Date();
     const clonedDate = deepClone(date);
@@ -47,40 +43,20 @@ describe('deepClone', () => {
     expect(clonedDate).not.toBe(date);
 
     // Set
-    const set = new Set([
-      1,
-      2,
-      3,
-    ]);
+    const set = new Set([1, 2, 3]);
     const clonedSet = deepClone(set);
-    expect([...clonedSet]).toEqual([
-      1,
-      2,
-      3,
-    ]);
+    expect([...clonedSet]).toEqual([1, 2, 3]);
     expect(clonedSet).not.toBe(set);
 
     // Map
     const map = new Map([
-      [
-        'a',
-        1,
-      ],
-      [
-        'b',
-        2,
-      ],
+      ["a", 1],
+      ["b", 2],
     ]);
     const clonedMap = deepClone(map);
     expect([...clonedMap]).toEqual([
-      [
-        'a',
-        1,
-      ],
-      [
-        'b',
-        2,
-      ],
+      ["a", 1],
+      ["b", 2],
     ]);
     expect(clonedMap).not.toBe(map);
 
@@ -94,39 +70,20 @@ describe('deepClone', () => {
     // ArrayBuffer and TypedArray
     const arrayBuffer = new ArrayBuffer(4);
     const view = new Uint8Array(arrayBuffer);
-    view.set([
-      1,
-      2,
-      3,
-      4,
-    ]);
+    view.set([1, 2, 3, 4]);
     const clonedBuffer = deepClone(arrayBuffer);
     expect(new Uint8Array(clonedBuffer)).toEqual(view);
     expect(clonedBuffer).not.toBe(arrayBuffer);
 
-    const typedArray = new Uint8Array([
-      1,
-      2,
-      3,
-      4,
-    ]);
+    const typedArray = new Uint8Array([1, 2, 3, 4]);
     const clonedTypedArray = deepClone(typedArray);
-    expect([...clonedTypedArray]).toEqual([
-      1,
-      2,
-      3,
-      4,
-    ]);
+    expect([...clonedTypedArray]).toEqual([1, 2, 3, 4]);
     expect(clonedTypedArray).not.toBe(typedArray);
   });
 
-  it('should handle arrays', () => {
+  it("should handle arrays", () => {
     // Regular array
-    const arr = [
-      1,
-      { a: 2 },
-      [3],
-    ];
+    const arr = [1, { a: 2 }, [3]];
     const clonedArr = deepClone(arr);
     expect(clonedArr).toEqual(arr);
     expect(clonedArr).not.toBe(arr);
@@ -135,13 +92,13 @@ describe('deepClone', () => {
 
     // Sparse array
     const sparse: string[] = [];
-    sparse[1] = 'middle';
+    sparse[1] = "middle";
     const clonedSparse = deepClone(sparse);
     expect(clonedSparse).toEqual(sparse);
-    expect(Object.keys(clonedSparse)).toEqual(['1']);
+    expect(Object.keys(clonedSparse)).toEqual(["1"]);
   });
 
-  it('should handle custom class instances', () => {
+  it("should handle custom class instances", () => {
     class Custom {
       constructor(public value: number) {}
       getValue() {
@@ -156,8 +113,8 @@ describe('deepClone', () => {
     expect(cloned).not.toBe(instance);
   });
 
-  it('should handle objects with getters, setters and symbols', () => {
-    const sym = Symbol('test');
+  it("should handle objects with getters, setters and symbols", () => {
+    const sym = Symbol("test");
     let value = 0;
 
     const obj = {
@@ -175,7 +132,7 @@ describe('deepClone', () => {
         value = v;
       },
       // Symbol property
-      [sym]: 'symbol value',
+      [sym]: "symbol value",
     };
 
     const cloned = deepClone(obj);
@@ -193,37 +150,26 @@ describe('deepClone', () => {
     expect(value).toBe(42); // Setter should work
 
     // Test symbol
-    expect(cloned[sym]).toBe('symbol value');
+    expect(cloned[sym]).toBe("symbol value");
 
     // Verify descriptors are preserved
-    const desc = Object.getOwnPropertyDescriptor(cloned, 'value');
+    const desc = Object.getOwnPropertyDescriptor(cloned, "value");
     expect(desc?.get).toBeDefined();
     expect(desc?.set).toBeUndefined();
   });
 
-  it('should handle nested objects with all types combined', () => {
+  it("should handle nested objects with all types combined", () => {
     const date = new Date();
-    const buffer = Buffer.from('test');
-    const sym = Symbol('test');
+    const buffer = Buffer.from("test");
+    const sym = Symbol("test");
 
     const original = {
       date,
       buffer,
-      map: new Map([
-        [
-          'a',
-          1,
-        ],
-      ]),
-      set: new Set([
-        1,
-        2,
-      ]),
-      array: [
-        1,
-        { nested: true },
-      ],
-      [sym]: 'symbol',
+      map: new Map([["a", 1]]),
+      set: new Set([1, 2]),
+      array: [1, { nested: true }],
+      [sym]: "symbol",
       get computed() {
         return 42;
       },
@@ -238,19 +184,19 @@ describe('deepClone', () => {
     expect(cloned.set).not.toBe(original.set);
     expect(cloned.array).not.toBe(original.array);
     expect(cloned.array[1]).not.toBe(original.array[1]);
-    expect(cloned[sym]).toBe('symbol');
+    expect(cloned[sym]).toBe("symbol");
     expect(cloned.computed).toBe(42);
   });
 
-  it('should handle error cases in Buffer operations', () => {
-    const buffer = Buffer.from('test');
+  it("should handle error cases in Buffer operations", () => {
+    const buffer = Buffer.from("test");
     const originalIsBuffer = Buffer.isBuffer;
 
     try {
-      (Buffer.isBuffer as unknown) = ((obj: unknown): obj is Buffer => {
-        throw new Error('isBuffer error');
-      });
-      expect(() => deepClone(buffer)).toThrow('isBuffer error');
+      (Buffer.isBuffer as unknown) = (obj: unknown): obj is Buffer => {
+        throw new Error("isBuffer error");
+      };
+      expect(() => deepClone(buffer)).toThrow("isBuffer error");
     } finally {
       Buffer.isBuffer = originalIsBuffer;
     }
@@ -266,27 +212,27 @@ describe('deepClone', () => {
     }
   });
 
-  it('should handle non-enumerable properties', () => {
+  it("should handle non-enumerable properties", () => {
     const obj = Object.create(null);
-    Object.defineProperty(obj, 'hidden', {
-      value: 'secret',
+    Object.defineProperty(obj, "hidden", {
+      value: "secret",
       enumerable: false,
     });
-    Object.defineProperty(obj, 'visible', {
-      value: 'public',
+    Object.defineProperty(obj, "visible", {
+      value: "public",
       enumerable: true,
     });
 
     const cloned = deepClone(obj);
-    expect(cloned.visible).toBe('public');
+    expect(cloned.visible).toBe("public");
     expect(cloned.hidden).toBeUndefined();
   });
 
-  it('should handle non-enumerable symbol properties', () => {
-    const sym = Symbol('test');
+  it("should handle non-enumerable symbol properties", () => {
+    const sym = Symbol("test");
     const obj = {};
     Object.defineProperty(obj, sym, {
-      value: 'secret',
+      value: "secret",
       enumerable: false,
     });
 
@@ -294,10 +240,10 @@ describe('deepClone', () => {
     expect(cloned[sym]).toBeUndefined();
   });
 
-  it('should handle edge cases with descriptors', () => {
+  it("should handle edge cases with descriptors", () => {
     // Test object with non-configurable property
     const objWithNonConfigurable: { fixed?: number } = {};
-    Object.defineProperty(objWithNonConfigurable, 'fixed', {
+    Object.defineProperty(objWithNonConfigurable, "fixed", {
       value: 42,
       configurable: false,
       writable: false,
@@ -308,7 +254,7 @@ describe('deepClone', () => {
 
     // Test object with property that has no descriptor
     const objWithoutDescriptor: { weird?: unknown } = {};
-    Object.defineProperty(objWithoutDescriptor, 'weird', {
+    Object.defineProperty(objWithoutDescriptor, "weird", {
       configurable: true,
       enumerable: true,
     });
@@ -316,7 +262,7 @@ describe('deepClone', () => {
     expect(clonedWithoutDescriptor.weird).toBeUndefined();
   });
 
-  it('should handle edge cases with typed arrays', () => {
+  it("should handle edge cases with typed arrays", () => {
     // Test regular TypedArrays
     const regularTypedArrays = [
       new Int8Array([1, 2, 3]),
@@ -339,10 +285,7 @@ describe('deepClone', () => {
     }
 
     // Test BigInt TypedArrays
-    const bigIntTypedArrays = [
-      new BigInt64Array([1n, 2n, 3n]),
-      new BigUint64Array([1n, 2n, 3n]),
-    ];
+    const bigIntTypedArrays = [new BigInt64Array([1n, 2n, 3n]), new BigUint64Array([1n, 2n, 3n])];
 
     for (const arr of bigIntTypedArrays) {
       const cloned = deepClone(arr);
@@ -353,19 +296,19 @@ describe('deepClone', () => {
     }
   });
 
-  it('should handle symbol properties with getters and setters', () => {
-    const sym = Symbol('test');
+  it("should handle symbol properties with getters and setters", () => {
+    const sym = Symbol("test");
     let value = 42;
 
     // Test in plain object
     const plainObj = {
-      [sym]: 'regular value',
+      [sym]: "regular value",
     };
-    Object.defineProperty(plainObj, Symbol('getter'), {
+    Object.defineProperty(plainObj, Symbol("getter"), {
       enumerable: true,
       get: () => value,
     });
-    Object.defineProperty(plainObj, Symbol('accessor'), {
+    Object.defineProperty(plainObj, Symbol("accessor"), {
       enumerable: true,
       get: () => value,
       set: (v: number) => {
@@ -385,14 +328,14 @@ describe('deepClone', () => {
     // Test in class instance
     class Custom {
       private value = 42;
-      [sym] = 'regular value';
+      [sym] = "regular value";
 
       constructor() {
-        Object.defineProperty(this, Symbol('getter'), {
+        Object.defineProperty(this, Symbol("getter"), {
           enumerable: true,
           get: () => this.value,
         });
-        Object.defineProperty(this, Symbol('accessor'), {
+        Object.defineProperty(this, Symbol("accessor"), {
           enumerable: true,
           get: () => this.value,
           set: (v: number) => {
@@ -419,7 +362,7 @@ describe('deepClone', () => {
     expect(clonedInstance[instanceGetterSym]).toBe(200);
   });
 
-  it('should handle non-enumerable properties with getters and setters', () => {
+  it("should handle non-enumerable properties with getters and setters", () => {
     let value = 42;
     let getterCalled = false;
     let setterCalled = false;
@@ -430,7 +373,7 @@ describe('deepClone', () => {
 
     // Test in plain object
     const obj = {} as WithHidden;
-    Object.defineProperty(obj, 'hidden', {
+    Object.defineProperty(obj, "hidden", {
       enumerable: false,
       get: () => {
         getterCalled = true;
@@ -449,7 +392,7 @@ describe('deepClone', () => {
     expect(value).toBe(50);
 
     const cloned = deepClone(obj);
-    expect(Object.getOwnPropertyDescriptor(cloned, 'hidden')).toBeUndefined();
+    expect(Object.getOwnPropertyDescriptor(cloned, "hidden")).toBeUndefined();
 
     // Test in class instance
     class Custom {
@@ -460,7 +403,7 @@ describe('deepClone', () => {
       declare test: number;
 
       constructor() {
-        Object.defineProperty(this, 'hidden', {
+        Object.defineProperty(this, "hidden", {
           enumerable: false,
           get: () => {
             this.getterCalled = true;
@@ -472,7 +415,7 @@ describe('deepClone', () => {
           },
         });
 
-        Object.defineProperty(this, 'test', {
+        Object.defineProperty(this, "test", {
           enumerable: false,
           get: () => this.value,
           set: (v: number) => {
@@ -513,14 +456,14 @@ describe('deepClone', () => {
     expect(instance.getValue()).toBe(200);
 
     const clonedInstance = deepClone(instance);
-    expect(Object.getOwnPropertyDescriptor(clonedInstance, 'hidden')).toBeUndefined();
+    expect(Object.getOwnPropertyDescriptor(clonedInstance, "hidden")).toBeUndefined();
 
     // Verify original object getters/setters were called
     expect(getterCalled).toBe(true);
     expect(setterCalled).toBe(true);
   });
 
-  it('should handle Buffer.isBuffer returning false for Buffer-like objects', () => {
+  it("should handle Buffer.isBuffer returning false for Buffer-like objects", () => {
     const bufferLike = {
       buffer: new ArrayBuffer(4),
       byteLength: 4,
@@ -533,7 +476,7 @@ describe('deepClone', () => {
     expect(cloned).not.toBe(bufferLike);
   });
 
-  it('should handle custom class instances with enumerable properties', () => {
+  it("should handle custom class instances with enumerable properties", () => {
     interface CustomProps {
       regularProp: { nested: { deep: number } };
       computedProp: number;
@@ -545,7 +488,7 @@ describe('deepClone', () => {
 
       constructor() {
         // Add a regular enumerable property with a nested object
-        Object.defineProperty(this, 'regularProp', {
+        Object.defineProperty(this, "regularProp", {
           enumerable: true,
           value: { nested: { deep: 42 } },
           configurable: true,
@@ -553,7 +496,7 @@ describe('deepClone', () => {
         });
 
         // Add a getter/setter property
-        Object.defineProperty(this, 'computedProp', {
+        Object.defineProperty(this, "computedProp", {
           enumerable: true,
           get: () => 42,
           set: () => {
@@ -578,7 +521,7 @@ describe('deepClone', () => {
     cloned.computedProp = 200;
   });
 
-  it('should handle arrays with different sizes and types', () => {
+  it("should handle arrays with different sizes and types", () => {
     // Small array (< 32 elements)
     const smallArr = Array.from({ length: 10 }, (_, i) => i);
     const clonedSmall = deepClone(smallArr);
@@ -593,13 +536,13 @@ describe('deepClone', () => {
 
     // Large sparse array
     const largeSparse: string[] = [];
-    largeSparse[50] = 'middle';
+    largeSparse[50] = "middle";
     const clonedSparse = deepClone(largeSparse);
     expect(clonedSparse).toEqual(largeSparse);
-    expect(Object.keys(clonedSparse)).toEqual(['50']);
+    expect(Object.keys(clonedSparse)).toEqual(["50"]);
   });
 
-  it('should handle DataView objects', () => {
+  it("should handle DataView objects", () => {
     const buffer = new ArrayBuffer(16);
     const view = new DataView(buffer);
     view.setInt32(0, 42);
@@ -611,12 +554,9 @@ describe('deepClone', () => {
     expect(cloned.buffer).not.toBe(buffer);
   });
 
-  it('should handle plain objects with many properties', () => {
+  it("should handle plain objects with many properties", () => {
     // Create object with many properties to test unrolled loop
-    const obj = Array.from(
-      { length: 20 },
-      (_, i) => [`key${i}`, i] as [string, number],
-    ).reduce<Record<string, number>>((acc, [key, value]) => {
+    const obj = Array.from({ length: 20 }, (_, i) => [`key${i}`, i] as [string, number]).reduce<Record<string, number>>((acc, [key, value]) => {
       acc[key] = value;
       return acc;
     }, {});
@@ -626,9 +566,9 @@ describe('deepClone', () => {
     expect(cloned).not.toBe(obj);
   });
 
-  it('should handle objects with non-enumerable properties', () => {
+  it("should handle objects with non-enumerable properties", () => {
     const obj = {};
-    Object.defineProperty(obj, 'hidden', {
+    Object.defineProperty(obj, "hidden", {
       value: 42,
       enumerable: false,
       configurable: true,
@@ -636,11 +576,11 @@ describe('deepClone', () => {
     });
 
     const cloned = deepClone(obj);
-    expect(Object.getOwnPropertyDescriptor(cloned, 'hidden')).toBeUndefined();
+    expect(Object.getOwnPropertyDescriptor(cloned, "hidden")).toBeUndefined();
   });
 
-  it('should handle objects with symbol properties that have getters/setters', () => {
-    const sym = Symbol('test');
+  it("should handle objects with symbol properties that have getters/setters", () => {
+    const sym = Symbol("test");
     let value = 42;
 
     const obj = {};
@@ -665,42 +605,42 @@ describe('deepClone', () => {
     expect(cloned[sym]).toBe(100);
   });
 
-  it('should handle Buffer error cases comprehensively', () => {
-    const buffer = Buffer.from('test');
+  it("should handle Buffer error cases comprehensively", () => {
+    const buffer = Buffer.from("test");
     const originalIsBuffer = Buffer.isBuffer;
 
     try {
       (Buffer.isBuffer as unknown) = (obj: unknown): obj is Buffer => {
-        throw new Error('isBuffer error');
+        throw new Error("isBuffer error");
       };
-      expect(() => deepClone(buffer)).toThrow('isBuffer error');
+      expect(() => deepClone(buffer)).toThrow("isBuffer error");
     } finally {
       Buffer.isBuffer = originalIsBuffer;
     }
   });
 
-  it('should handle Buffer error cases with Error-like objects', () => {
-    const buffer = Buffer.from('test');
+  it("should handle Buffer error cases with Error-like objects", () => {
+    const buffer = Buffer.from("test");
     const originalIsBuffer = Buffer.isBuffer;
 
     try {
       (Buffer.isBuffer as unknown) = (obj: unknown): obj is Buffer => {
-        throw new Error('isBuffer error');
+        throw new Error("isBuffer error");
       };
-      expect(() => deepClone(buffer)).toThrow('isBuffer error');
+      expect(() => deepClone(buffer)).toThrow("isBuffer error");
     } finally {
       Buffer.isBuffer = originalIsBuffer;
     }
   });
 
-  it('should handle Buffer error cases with various error types', () => {
-    const buffer = Buffer.from('test');
+  it("should handle Buffer error cases with various error types", () => {
+    const buffer = Buffer.from("test");
     const originalIsBuffer = Buffer.isBuffer;
 
     // Test with Error object without stack
     try {
       (Buffer.isBuffer as unknown) = (obj: unknown): obj is Buffer => {
-        const error = { name: 'Error', message: 'custom error' } as Error;
+        const error = { name: "Error", message: "custom error" } as Error;
         throw error;
       };
       const result = deepClone(buffer);
@@ -710,7 +650,7 @@ describe('deepClone', () => {
     }
   });
 
-  it('should handle DataView objects comprehensively', () => {
+  it("should handle DataView objects comprehensively", () => {
     const buffer = new ArrayBuffer(16);
     const view = new DataView(buffer);
     view.setInt32(0, 42);
@@ -725,15 +665,15 @@ describe('deepClone', () => {
     const customDataView = {
       byteLength: 16,
       constructor: DataView,
-      [Symbol.toStringTag]: 'DataView',
+      [Symbol.toStringTag]: "DataView",
     };
 
     const clonedCustom = deepClone(customDataView);
     expect(clonedCustom.byteLength).toBe(16);
-    expect(clonedCustom[Symbol.toStringTag]).toBe('DataView');
+    expect(clonedCustom[Symbol.toStringTag]).toBe("DataView");
   });
 
-  it('should handle DataView objects with various buffer configurations', () => {
+  it("should handle DataView objects with various buffer configurations", () => {
     // Test DataView with a buffer that has a different byteLength
     const buffer = new ArrayBuffer(32);
     const view = new DataView(buffer, 8, 16); // offset: 8, length: 16
@@ -750,16 +690,16 @@ describe('deepClone', () => {
     // Test DataView-like object without buffer property
     const customDataView = {
       byteLength: 16,
-      [Symbol.toStringTag]: 'DataView',
+      [Symbol.toStringTag]: "DataView",
     };
 
     const clonedCustom = deepClone(customDataView);
     expect(clonedCustom.byteLength).toBe(16);
-    expect(clonedCustom[Symbol.toStringTag]).toBe('DataView');
+    expect(clonedCustom[Symbol.toStringTag]).toBe("DataView");
   });
 
-  it('should handle objects with symbol properties that have getters/setters comprehensively', () => {
-    const sym = Symbol('test');
+  it("should handle objects with symbol properties that have getters/setters comprehensively", () => {
+    const sym = Symbol("test");
     let value = 42;
 
     const obj = {};
@@ -784,13 +724,13 @@ describe('deepClone', () => {
     expect(cloned[sym]).toBe(100);
   });
 
-  it('should handle Buffer error cases with non-Error throws', () => {
-    const buffer = Buffer.from('test');
+  it("should handle Buffer error cases with non-Error throws", () => {
+    const buffer = Buffer.from("test");
     const originalIsBuffer = Buffer.isBuffer;
 
     try {
       (Buffer.isBuffer as unknown) = (obj: unknown): obj is Buffer => {
-        throw 'string error'; // non-Error throw
+        throw "string error"; // non-Error throw
       };
       const result = deepClone(buffer);
       expect(result).toBeDefined();
@@ -799,7 +739,7 @@ describe('deepClone', () => {
     }
   });
 
-  it('should handle DataView objects with custom buffer handling', () => {
+  it("should handle DataView objects with custom buffer handling", () => {
     const buffer = new ArrayBuffer(16);
     const view = new DataView(buffer);
     view.setInt32(0, 42);
@@ -817,7 +757,7 @@ describe('deepClone', () => {
     expect(cloned.byteLength).toBe(16);
   });
 
-  it('should handle getters/setters with side effects', () => {
+  it("should handle getters/setters with side effects", () => {
     let sideEffect = 0;
     const obj = {
       get value() {
@@ -836,14 +776,14 @@ describe('deepClone', () => {
     expect(sideEffect).toBe(100);
   });
 
-  it('should handle Buffer error cases with non-Error throws and DataView edge cases', () => {
+  it("should handle Buffer error cases with non-Error throws and DataView edge cases", () => {
     // Test Buffer error cases
-    const buffer = Buffer.from('test');
+    const buffer = Buffer.from("test");
     const originalIsBuffer = Buffer.isBuffer;
 
     try {
       (Buffer.isBuffer as unknown) = (obj: unknown): obj is Buffer => {
-        throw { message: 'custom error object' }; // non-Error throw with message property
+        throw { message: "custom error object" }; // non-Error throw with message property
       };
       const result = deepClone(buffer);
       expect(result).toBeDefined();
@@ -870,7 +810,7 @@ describe('deepClone', () => {
     expect(cloned.buffer).not.toBe(buffer2);
   });
 
-  it('should handle DataView objects with buffer access errors', () => {
+  it("should handle DataView objects with buffer access errors", () => {
     const buffer = new ArrayBuffer(16);
     const view = new DataView(buffer);
     view.setInt32(0, 42);
@@ -878,17 +818,17 @@ describe('deepClone', () => {
     // Create a DataView-like object with a buffer that throws on access
     const customView = {
       get buffer() {
-        throw new Error('Cannot access buffer');
+        throw new Error("Cannot access buffer");
       },
       byteLength: 16,
       byteOffset: 0,
       constructor: DataView,
     };
 
-    expect(() => deepClone(customView)).toThrow('Cannot access buffer');
+    expect(() => deepClone(customView)).toThrow("Cannot access buffer");
   });
 
-  it('should handle Buffer-like objects with various configurations', () => {
+  it("should handle Buffer-like objects with various configurations", () => {
     // Test Buffer-like object with ArrayBuffer
     const bufferLike = {
       buffer: new ArrayBuffer(16),
@@ -929,22 +869,20 @@ describe('deepClone', () => {
 
       const clonedNoBuffer = deepClone(bufferLikeNoBuffer);
       expect(clonedNoBuffer).toBeInstanceOf(Uint8Array);
-      expect(Array.from((clonedNoBuffer as Uint8Array).slice(0, 4))).toEqual([
-        1, 2, 3, 4,
-      ]);
+      expect(Array.from((clonedNoBuffer as Uint8Array).slice(0, 4))).toEqual([1, 2, 3, 4]);
     } finally {
       global.Buffer = originalBuffer;
     }
   });
 
-  it('should handle Buffer error cases with various error types', () => {
-    const buffer = Buffer.from('test');
+  it("should handle Buffer error cases with various error types", () => {
+    const buffer = Buffer.from("test");
     const originalIsBuffer = Buffer.isBuffer;
 
     // Test with Error object without stack
     try {
       (Buffer.isBuffer as unknown) = (obj: unknown): obj is Buffer => {
-        const error = { name: 'Error', message: 'custom error' } as Error;
+        const error = { name: "Error", message: "custom error" } as Error;
         throw error;
       };
       const result = deepClone(buffer);
@@ -956,7 +894,7 @@ describe('deepClone', () => {
     // Test with non-Error object that has message
     try {
       (Buffer.isBuffer as unknown) = (obj: unknown): obj is Buffer => {
-        throw { message: 'custom error object', name: 'CustomError' };
+        throw { message: "custom error object", name: "CustomError" };
       };
       const result = deepClone(buffer);
       expect(result).toBeDefined();
@@ -965,20 +903,20 @@ describe('deepClone', () => {
     }
   });
 
-  it('should handle DataView-like objects without buffer property', () => {
+  it("should handle DataView-like objects without buffer property", () => {
     // Create a DataView-like object without a buffer property
     const customDataView = {
       byteLength: 16,
       constructor: DataView,
-      [Symbol.toStringTag]: 'DataView',
+      [Symbol.toStringTag]: "DataView",
     };
 
     const clonedCustom = deepClone(customDataView);
     expect(clonedCustom.byteLength).toBe(16);
-    expect(clonedCustom[Symbol.toStringTag]).toBe('DataView');
+    expect(clonedCustom[Symbol.toStringTag]).toBe("DataView");
   });
 
-  it('should handle DataView-like objects without buffer property and with ArrayBuffer.isView', () => {
+  it("should handle DataView-like objects without buffer property and with ArrayBuffer.isView", () => {
     // Create a DataView-like object without a buffer property
     const customDataView = {
       byteLength: 16,
@@ -988,9 +926,7 @@ describe('deepClone', () => {
     // Mock ArrayBuffer.isView to return true for our custom object
     const originalIsView = ArrayBuffer.isView;
     try {
-      (ArrayBuffer.isView as unknown) = (
-        obj: unknown,
-      ): obj is ArrayBufferView => {
+      (ArrayBuffer.isView as unknown) = (obj: unknown): obj is ArrayBufferView => {
         return obj === customDataView;
       };
 
@@ -1003,13 +939,13 @@ describe('deepClone', () => {
     }
   });
 
-  it('should handle non-enumerable symbol properties with descriptors', () => {
-    const sym = Symbol('test');
+  it("should handle non-enumerable symbol properties with descriptors", () => {
+    const sym = Symbol("test");
     const obj = {};
 
     // Define a non-enumerable symbol property with a descriptor
     Object.defineProperty(obj, sym, {
-      value: 'secret',
+      value: "secret",
       enumerable: false,
       configurable: true,
       writable: true,
@@ -1020,9 +956,9 @@ describe('deepClone', () => {
     expect(cloned[sym]).toBeUndefined();
 
     // Also test with a mix of enumerable and non-enumerable symbol properties
-    const sym2 = Symbol('test2');
+    const sym2 = Symbol("test2");
     Object.defineProperty(obj, sym2, {
-      value: 'visible',
+      value: "visible",
       enumerable: true,
       configurable: true,
       writable: true,
@@ -1030,21 +966,21 @@ describe('deepClone', () => {
 
     const cloned2 = deepClone(obj);
     expect(Object.getOwnPropertyDescriptor(cloned2, sym)).toBeUndefined();
-    expect(cloned2[sym2]).toBe('visible');
+    expect(cloned2[sym2]).toBe("visible");
   });
 
-  it('should handle sparse arrays with large gaps', () => {
+  it("should handle sparse arrays with large gaps", () => {
     const sparse: string[] = [];
-    sparse[100] = 'end';
+    sparse[100] = "end";
     const clonedSparse = deepClone(sparse);
     expect(clonedSparse).toEqual(sparse);
   });
 
-  it('should handle symbol properties with undefined descriptors', () => {
-    const sym = Symbol('test');
+  it("should handle symbol properties with undefined descriptors", () => {
+    const sym = Symbol("test");
     const obj = Object.create(null);
     Object.defineProperty(obj, sym, {
-      value: 'test',
+      value: "test",
       enumerable: false,
       configurable: true,
     });

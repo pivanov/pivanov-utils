@@ -1,9 +1,8 @@
 {
   "name": "@pivanov/utils",
-  "version": "0.0.3",
-  "description": "A collection of personal utilities to live a happier life",
+  "version": "1.0.0",
+  "description": "A focused collection of TypeScript utilities for modern web development",
   "type": "module",
-  "packageManager": "pnpm@9.0.0",
   "repository": {
     "type": "git",
     "url": "git://github.com/pivanov/pivanov-utils.git"
@@ -13,14 +12,17 @@
     "url": "https://github.com/pivanov/pivanov-utils/issues"
   },
   "scripts": {
-    "build": "rm -rf dist && pnpm rollup -c",
-    "test": "pnpm vitest",
-    "test:coverage": "pnpm vitest --coverage",
-    "test:ui": "pnpm vitest --ui",
+    "build": "rm -rf dist && bun run scripts/build.ts && bun x tsc --emitDeclarationOnly",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
     "lint": "biome lint .",
     "format": "biome format . --write",
     "check": "biome check . --write",
-    "prepublishOnly": "pnpm build"
+    "typecheck": "bun x tsc --noEmit",
+    "docs:dev": "bun x vitepress dev docs",
+    "docs:build": "bun x vitepress build docs",
+    "docs:preview": "bun x vitepress preview docs",
+    "prepublishOnly": "bun run build"
   },
   "author": {
     "name": "Pavel Ivanov",
@@ -40,46 +42,73 @@
     "promise"
   ],
   "license": "MIT",
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
-  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
+    },
+    "./assertion": {
+      "types": "./dist/types/assertion/index.d.ts",
+      "import": "./dist/esm/assertion/index.js",
+      "require": "./dist/cjs/assertion/index.js"
+    },
+    "./object": {
+      "types": "./dist/types/object/index.d.ts",
+      "import": "./dist/esm/object/index.js",
+      "require": "./dist/cjs/object/index.js"
+    },
+    "./promise": {
+      "types": "./dist/types/promise/index.d.ts",
+      "import": "./dist/esm/promise/index.js",
+      "require": "./dist/cjs/promise/index.js"
+    },
+    "./string": {
+      "types": "./dist/types/string/index.d.ts",
+      "import": "./dist/esm/string/index.js",
+      "require": "./dist/cjs/string/index.js"
+    },
+    "./tools": {
+      "types": "./dist/types/tools/index.d.ts",
+      "import": "./dist/esm/tools/index.js",
+      "require": "./dist/cjs/tools/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/types/index.d.ts",
+      "import": "./dist/esm/types/index.js",
+      "require": "./dist/cjs/types/index.js"
     }
   },
-  "files": ["dist/"],
+  "files": [
+    "dist/"
+  ],
   "peerDependencies": {
     "react": ">=18",
     "react-dom": ">=18"
   },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
-    "@rollup/plugin-commonjs": "^28.0.0",
-    "@rollup/plugin-node-resolve": "^15.3.0",
-    "@rollup/plugin-typescript": "^12.1.1",
-    "@testing-library/dom": "^10.4.0",
+    "@biomejs/biome": "^2.4.11",
+    "@happy-dom/global-registrator": "^15.11.7",
     "@testing-library/react": "^16.0.1",
-    "@testing-library/react-hooks": "^8.0.1",
-    "@types/node": "^22.9.0",
+    "@types/bun": "^1.1.14",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@vercel/ncc": "0.38.2",
-    "@vitest/coverage-v8": "^2.1.4",
-    "evt": "^2.4.18",
-    "glob": "^11.0.0",
-    "husky": "^4.3.0",
-    "jsdom": "^25.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "rollup": "^4.23.0",
-    "rollup-plugin-dts": "^6.1.1",
-    "rollup-plugin-terser": "^7.0.2",
-    "tslib": "^2.7.0",
-    "typescript": "5.7.2",
-    "vitest": "^2.1.4"
+    "typescript": "^5.7.2",
+    "vitepress": "~1.5.0"
   },
   "publishConfig": {
     "access": "public"

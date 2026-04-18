@@ -1,186 +1,234 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 
-import {
-  calculateRenderedTextWidth,
-  checkVisibility,
-  isBrowser,
-  setStyleProperties,
-} from '../dom';
+import { __resetTextMeasurementCache, calculateRenderedTextWidth, checkVisibility, isBrowser, isInViewport, setStyleProperties } from "../dom";
 
-describe('DOM utilities', () => {
-  // Setup for browser environment mocking
-  const originalWindow = global.window;
-  const originalDocument = global.document;
-
-  beforeEach(() => {
-    // Mock window and document
-    global.window = {
-      innerHeight: 800,
-      innerWidth: 800,
-    } as Window & typeof globalThis;
-
-    global.document = {
-      documentElement: {
-        clientHeight: 800,
-        clientWidth: 800,
-      },
-      createElement: vi.fn(),
-    } as unknown as Document;
-  });
-
-  afterEach(() => {
-    global.window = originalWindow;
-    global.document = originalDocument;
-    vi.clearAllMocks();
-  });
-
-  describe('isBrowser', () => {
-    it('returns true when window is defined', () => {
+describe("DOM utilities", () => {
+  describe("isBrowser", () => {
+    it("returns true when window + document exist", () => {
       expect(isBrowser()).toBe(true);
     });
+  });
 
-    it('returns false when window is undefined', () => {
-      global.window = undefined as unknown as Window & typeof globalThis;
-      expect(isBrowser()).toBe(false);
+  describe("setStyleProperties", () => {
+    it("sets each CSS variable", () => {
+      const el = document.createElement("div");
+      setStyleProperties(el, { "--color": "red", "--size": "12px" });
+      expect(el.style.getPropertyValue("--color")).toBe("red");
+      expect(el.style.getPropertyValue("--size")).toBe("12px");
+    });
+
+    it("handles null element gracefully", () => {
+      expect(() => setStyleProperties(null, { "--color": "red" })).not.toThrow();
     });
   });
 
-  describe('setStyleProperties', () => {
-    it('sets style properties on element', () => {
-      const mockElement = {
-        style: {
-          setProperty: vi.fn(),
-        },
-      } as unknown as HTMLElement;
+  describe("checkVisibility", () => {
+    let el: HTMLElement;
+    const stubRect = (rect: Partial<DOMRect>) => {
+      el.getBoundingClientRect = () =>
+        ({
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          top: 10,
+          left: 10,
+          right: 110,
+          bottom: 110,
+          toJSON: () => ({}),
+          ...rect,
+        }) as DOMRect;
+    };
 
-      const cssVars: Record<string, string> = {
-        '--color': 'red',
-        '--size': '12px',
+    beforeEach(() => {
+      el = document.createElement("div");
+      document.body.appendChild(el);
+    });
+
+    afterEach(() => {
+      el.remove();
+    });
+
+    it("returns true for an attached, visible, in-viewport element", () => {
+      stubRect({});
+      expect(checkVisibility(el)).toBe(true);
+    });
+
+    it("returns false when detached", () => {
+      el.remove();
+      expect(checkVisibility(el)).toBe(false);
+    });
+
+    it("returns false for display:none", () => {
+      el.style.display = "none";
+      expect(checkVisibility(el)).toBe(false);
+    });
+
+    it("returns false for visibility:hidden", () => {
+      el.style.visibility = "hidden";
+      expect(checkVisibility(el)).toBe(false);
+    });
+
+    it("returns false for opacity:0", () => {
+      el.style.opacity = "0";
+      expect(checkVisibility(el)).toBe(false);
+    });
+
+    it("returns true for non-zero explicit opacity", () => {
+      el.style.opacity = "0.5";
+      stubRect({});
+      expect(checkVisibility(el)).toBe(true);
+    });
+
+    it("returns false when rect is above viewport", () => {
+      stubRect({ top: -500, bottom: -400 });
+      expect(checkVisibility(el)).toBe(false);
+    });
+
+    it("returns false when rect is below viewport", () => {
+      const h = window.innerHeight;
+      stubRect({ top: h + 100, bottom: h + 200 });
+      expect(checkVisibility(el)).toBe(false);
+    });
+
+    it("returns false when rect is left of viewport", () => {
+      stubRect({ left: -500, right: -400 });
+      expect(checkVisibility(el)).toBe(false);
+    });
+
+    it("respects checkViewport:false", () => {
+      stubRect({ top: -500, bottom: -400 });
+      expect(checkVisibility(el, { checkViewport: false })).toBe(true);
+    });
+
+    it("respects checkOpacity:false", () => {
+      el.style.opacity = "0";
+      stubRect({});
+      expect(checkVisibility(el, { checkOpacity: false })).toBe(true);
+    });
+
+    it("skips viewport check when layout reports zero rect", () => {
+      expect(checkVisibility(el)).toBe(true);
+    });
+  });
+
+  describe("isInViewport", () => {
+    let el: HTMLElement;
+    const stubRect = (rect: Partial<DOMRect>) => {
+      el.getBoundingClientRect = () =>
+        ({
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          top: 10,
+          left: 10,
+          right: 110,
+          bottom: 110,
+          toJSON: () => ({}),
+          ...rect,
+        }) as DOMRect;
+    };
+
+    beforeEach(() => {
+      el = document.createElement("div");
+      document.body.appendChild(el);
+    });
+
+    afterEach(() => {
+      el.remove();
+    });
+
+    it("true for visible rect", () => {
+      stubRect({});
+      expect(isInViewport(el)).toBe(true);
+    });
+
+    it("false when above viewport", () => {
+      stubRect({ top: -500, bottom: -400 });
+      expect(isInViewport(el)).toBe(false);
+    });
+
+    it("false when left of viewport", () => {
+      stubRect({ left: -500, right: -400 });
+      expect(isInViewport(el)).toBe(false);
+    });
+
+    it("vertical-only skips horizontal check", () => {
+      stubRect({ left: -500, right: -400 });
+      expect(isInViewport(el, { horizontal: false })).toBe(true);
+    });
+
+    it("zero-sized rect short-circuits to true", () => {
+      expect(isInViewport(el)).toBe(true);
+    });
+  });
+
+  describe("calculateRenderedTextWidth", () => {
+    const originalCreateElement = document.createElement.bind(document);
+    let calls = 0;
+    let stubContext: { font: string; measureText: (t: string) => { width: number } };
+
+    beforeEach(() => {
+      __resetTextMeasurementCache();
+      calls = 0;
+      stubContext = {
+        font: "",
+        measureText: (t: string) => ({ width: t.length * 10 }),
       };
-
-      setStyleProperties(mockElement, cssVars);
-
-      expect(mockElement.style.setProperty).toHaveBeenCalledTimes(2);
-      expect(mockElement.style.setProperty).toHaveBeenCalledWith(
-        '--color',
-        'red',
-      );
-      expect(mockElement.style.setProperty).toHaveBeenCalledWith(
-        '--size',
-        '12px',
-      );
+      document.createElement = mock(((tag: string) => {
+        if (tag === "canvas") {
+          calls++;
+          return {
+            getContext: () => stubContext,
+          } as unknown as HTMLCanvasElement;
+        }
+        return originalCreateElement(tag);
+      }) as typeof document.createElement);
     });
 
-    it('handles null element gracefully', () => {
-      expect(() => {
-        setStyleProperties(null, { '--color': 'red' });
-      }).not.toThrow();
-    });
-  });
-
-  describe('checkVisibility', () => {
-    it('returns true when element is in viewport', () => {
-      const mockElement = {
-        getBoundingClientRect: () => ({
-          top: 100,
-          bottom: 200,
-        }),
-      } as HTMLElement;
-
-      expect(checkVisibility(mockElement)).toBe(true);
+    afterEach(() => {
+      document.createElement = originalCreateElement;
+      __resetTextMeasurementCache();
     });
 
-    it('returns false when element is above viewport', () => {
-      const mockElement = {
-        getBoundingClientRect: () => ({
-          top: -200,
-          bottom: -100,
-        }),
-      } as HTMLElement;
-
-      expect(checkVisibility(mockElement)).toBe(false);
+    it("measures text width with default font", () => {
+      expect(calculateRenderedTextWidth("test", 16)).toBe(40);
+      expect(stubContext.font).toContain("16px");
     });
 
-    it('returns false when element is below viewport', () => {
-      const mockElement = {
-        getBoundingClientRect: () => ({
-          top: 1000,
-          bottom: 1100,
-        }),
-      } as HTMLElement;
-
-      expect(checkVisibility(mockElement)).toBe(false);
-    });
-  });
-
-  describe('calculateRenderedTextWidth', () => {
-    it('calculates text width correctly', () => {
-      const mockContext = {
-        font: '',
-        measureText: vi.fn().mockReturnValue({ width: 100 }),
-      } as unknown as CanvasRenderingContext2D;
-
-      const mockCanvas = {
-        getContext: vi.fn().mockReturnValue(mockContext),
-      } as unknown as HTMLCanvasElement;
-
-      (document.createElement as ReturnType<typeof vi.fn>).mockReturnValue(
-        mockCanvas,
-      );
-
-      const width = calculateRenderedTextWidth('test', 16);
-
-      expect(width).toBe(100);
-      expect(mockContext.font).toBe(
-        '16px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',
-      );
+    it("uppercases when requested", () => {
+      expect(calculateRenderedTextWidth("abc", 14, true)).toBe(30);
     });
 
-    it('handles uppercase conversion', () => {
-      const mockContext = {
-        font: '',
-        measureText: vi.fn().mockReturnValue({ width: 120 }),
-      } as unknown as CanvasRenderingContext2D;
-
-      const mockCanvas = {
-        getContext: vi.fn().mockReturnValue(mockContext),
-      } as unknown as HTMLCanvasElement;
-
-      (document.createElement as ReturnType<typeof vi.fn>).mockReturnValue(
-        mockCanvas,
-      );
-
-      const width = calculateRenderedTextWidth('test', 16, true);
-
-      expect(mockContext.measureText).toHaveBeenCalledWith('TEST');
-      expect(width).toBe(120);
+    it("accepts a custom font family", () => {
+      calculateRenderedTextWidth("hi", 12, false, "Arial");
+      expect(stubContext.font).toBe("12px Arial");
     });
 
-    it('handles custom font family', () => {
-      const mockContext = {
-        font: '',
-        measureText: vi.fn().mockReturnValue({ width: 100 }),
-      } as unknown as CanvasRenderingContext2D;
+    it("caches the canvas across calls", () => {
+      calculateRenderedTextWidth("a", 10);
+      calculateRenderedTextWidth("b", 10);
+      calculateRenderedTextWidth("c", 10);
+      expect(calls).toBe(1);
+    });
 
-      const mockCanvas = {
-        getContext: vi.fn().mockReturnValue(mockContext),
-      } as unknown as HTMLCanvasElement;
+    it("returns 0 when getContext returns null", () => {
+      __resetTextMeasurementCache();
+      document.createElement = mock((() => ({ getContext: () => null }) as unknown as HTMLCanvasElement) as typeof document.createElement);
+      expect(calculateRenderedTextWidth("x", 16)).toBe(0);
+    });
 
-      (document.createElement as ReturnType<typeof vi.fn>).mockReturnValue(
-        mockCanvas,
-      );
-
-      const width = calculateRenderedTextWidth('test', 16, false, 'Arial');
-
-      expect(width).toBe(100);
-      expect(mockContext.font).toBe('16px Arial');
+    it("returns 0 when document is unavailable (SSR)", () => {
+      __resetTextMeasurementCache();
+      const originalDocument = globalThis.document;
+      try {
+        (globalThis as { document?: Document }).document = undefined;
+        expect(calculateRenderedTextWidth("x", 16)).toBe(0);
+      } finally {
+        (globalThis as { document?: Document }).document = originalDocument;
+        __resetTextMeasurementCache();
+      }
     });
   });
 });

@@ -1,15 +1,31 @@
-import {
-  describe,
-  expect,
-  it,
-} from 'vitest';
+import { describe, expect, it } from "bun:test";
 
-import * as utils from '../index';
+import * as tools from "../index";
 
-describe('barrel file exports', () => {
-  it('should export all utilities', () => {
-    expect(utils).toBeDefined();
-    // Optional: you can also test for specific exports if you want to be thorough
-    expect(Object.keys(utils).length).toBeGreaterThan(0);
+describe("tools barrel exports", () => {
+  it("exposes deepClone, isEqual, dom, eventBus and cache utilities", () => {
+    const expected = [
+      "deepClone",
+      "isEqual",
+      "isBrowser",
+      "checkVisibility",
+      "setStyleProperties",
+      "calculateRenderedTextWidth",
+      "busDispatch",
+      "busSubscribe",
+      "useEventBus",
+      "storageSetItem",
+      "storageGetItem",
+      "storageRemoveItem",
+      "storageClear",
+      "storageExists",
+      "storageGetAllKeys",
+      "storageCalculateSize",
+      "storageClearByPrefixOrSuffix",
+    ];
+
+    for (const name of expected) {
+      expect((tools as Record<string, unknown>)[name]).toBeDefined();
+    }
   });
 });

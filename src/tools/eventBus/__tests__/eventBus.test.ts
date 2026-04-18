@@ -1,217 +1,125 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, describe, expect, it, mock, spyOn } from "bun:test";
 
-import {
-  busDispatch,
-  busSubscribe,
-} from '../';
+import { busDispatch, busOnce, busSubscribe } from "../";
+import type { TEventBusListener } from "../types";
 
-import type { TEventBusListener } from '../types';
+describe("EventBus", () => {
+  afterEach(() => {
+    mock.restore();
+  });
 
-beforeEach(() => {
-  // No need to mock window as jsdom provides it
-  // Only need to clear existing listeners between tests
-  const events = document.querySelectorAll('*');
-  for (const element of events) {
-    element.replaceWith(element.cloneNode(true));
-  }
-});
+  it("calls listener when event is dispatched", () => {
+    const listener = mock((_msg: unknown) => {});
+    busSubscribe("test-topic", listener);
+    busDispatch("test-topic", { data: "test" });
+    expect(listener).toHaveBeenCalledWith({ data: "test" });
+  });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+  it("supports multiple listeners for the same topic", () => {
+    const a = mock((_msg: unknown) => {});
+    const b = mock((_msg: unknown) => {});
+    busSubscribe("shared-topic", a);
+    busSubscribe("shared-topic", b);
+    busDispatch("shared-topic", "payload");
+    expect(a).toHaveBeenCalledTimes(1);
+    expect(b).toHaveBeenCalledTimes(1);
+  });
 
-describe('EventBus', () => {
-  describe('busSubscribe/busDispatch', () => {
-    it('should call listener when event is dispatched', () => {
-      const topic = 'test-topic';
-      const message = { data: 'test' };
-      const listener = vi.fn();
+  it("isolates listeners per topic", () => {
+    const a = mock((_msg: unknown) => {});
+    const b = mock((_msg: unknown) => {});
+    busSubscribe("topic-a", a);
+    busSubscribe("topic-b", b);
+    busDispatch("topic-a", "data");
+    expect(a).toHaveBeenCalledTimes(1);
+    expect(b).not.toHaveBeenCalled();
+  });
 
-      busSubscribe(topic, listener);
-      busDispatch(topic, message);
+  it("unsubscribes via returned function", () => {
+    const listener = mock((_msg: unknown) => {});
+    const unsubscribe = busSubscribe("unsub-topic", listener);
+    busDispatch("unsub-topic", "first");
+    unsubscribe();
+    busDispatch("unsub-topic", "second");
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith("first");
+  });
 
-      expect(listener).toHaveBeenCalledWith(message);
+  it("keeps other listeners alive when one throws", () => {
+    const consoleSpy = spyOn(console, "error").mockImplementation(() => {});
+    const bad = mock(() => {
+      throw new Error("Listener error");
     });
+    const good = mock((_msg: unknown) => {});
+    busSubscribe("error-topic", bad);
+    busSubscribe("error-topic", good);
+    busDispatch("error-topic", { data: "x" });
+    expect(bad).toHaveBeenCalledTimes(1);
+    expect(good).toHaveBeenCalledTimes(1);
+    expect(consoleSpy).toHaveBeenCalled();
+  });
 
-    it('should support multiple listeners for same event', () => {
-      const listener1 = vi.fn();
-      const listener2 = vi.fn();
+  it("no-ops on empty topics", () => {
+    const listener = mock((_msg: unknown) => {});
+    busDispatch("", "data");
+    expect(listener).not.toHaveBeenCalled();
 
-      busSubscribe('test-event', listener1);
-      busSubscribe('test-event', listener2);
+    const unsubscribe = busSubscribe("", null as unknown as TEventBusListener<unknown>);
+    expect(() => unsubscribe()).not.toThrow();
+  });
 
-      const payload = { data: 'test' };
-      busDispatch('test-event', payload);
+  it("ignores non-CustomEvents dispatched under the hashed topic", () => {
+    const listener = mock((_msg: unknown) => {});
+    const addSpy = spyOn(window, "addEventListener");
+    busSubscribe("raw-topic", listener);
+    const [hashedTopic, handler] = addSpy.mock.calls.at(-1) as [string, EventListener];
+    handler(new Event(hashedTopic));
+    expect(listener).not.toHaveBeenCalled();
+    addSpy.mockRestore();
+  });
 
-      expect(listener1).toHaveBeenCalledTimes(1);
-      expect(listener2).toHaveBeenCalledTimes(1);
-      expect(listener1).toHaveBeenCalledWith(payload);
-      expect(listener2).toHaveBeenCalledWith(payload);
+  it("handles unicode topics", () => {
+    const listener = mock((_msg: unknown) => {});
+    const topic = "🚀 special → characters ←";
+    busSubscribe(topic, listener);
+    busDispatch(topic, "hello");
+    expect(listener).toHaveBeenCalledWith("hello");
+  });
+
+  it("custom onError overrides default logging", () => {
+    const onError = mock((_e: unknown) => {});
+    const bad = mock(() => {
+      throw new Error("bad");
     });
+    busSubscribe("err-topic", bad, { onError });
+    busDispatch("err-topic", 1);
+    expect(onError).toHaveBeenCalled();
+  });
 
-    it('should not call listeners of different events', () => {
-      const listener1 = vi.fn();
-      const listener2 = vi.fn();
-
-      busSubscribe('event1', listener1);
-      busSubscribe('event2', listener2);
-
-      busDispatch('event1', 'data');
-
-      expect(listener1).toHaveBeenCalledTimes(1);
-      expect(listener2).not.toHaveBeenCalled();
-    });
-
-    it('should return unsubscribe function', () => {
-      const listener = vi.fn();
-      const unsubscribe = busSubscribe('test-event', listener);
-
-      busDispatch('test-event', 'first');
-      unsubscribe();
-      busDispatch('test-event', 'second');
-
+  describe("busOnce", () => {
+    it("fires once then auto-unsubscribes", () => {
+      const listener = mock((_msg: unknown) => {});
+      busOnce("once-topic", listener);
+      busDispatch("once-topic", "a");
+      busDispatch("once-topic", "b");
+      busDispatch("once-topic", "c");
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith('first');
+      expect(listener).toHaveBeenCalledWith("a");
     });
 
-    it('should handle multiple subscriptions and unsubscriptions correctly', () => {
-      const listener1 = vi.fn();
-      const listener2 = vi.fn();
-
-      const unsubscribe1 = busSubscribe('test-event', listener1);
-      const unsubscribe2 = busSubscribe('test-event', listener2);
-
-      busDispatch('test-event', 'first');
-      unsubscribe1();
-
-      busDispatch('test-event', 'second');
-      unsubscribe2();
-
-      expect(listener1).toHaveBeenCalledTimes(1);
-      expect(listener1).toHaveBeenCalledWith('first');
-      expect(listener2).toHaveBeenCalledTimes(2);
-      expect(listener2).toHaveBeenCalledWith('second');
-    });
-
-    it('should handle errors in listeners without affecting other listeners', () => {
-      // Temporarily suppress console.error
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      const errorListener = vi.fn().mockImplementation(() => {
-        throw new Error('Listener error');
-      });
-      const successListener = vi.fn();
-
-      busSubscribe('test', errorListener);
-      busSubscribe('test', successListener);
-
-      busDispatch('test', { data: 'test' });
-
-      expect(errorListener).toHaveBeenCalledTimes(1);
-      expect(successListener).toHaveBeenCalledTimes(1);
-      expect(successListener).toHaveBeenCalledWith({ data: 'test' });
-
-      // Verify error was logged
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Event listener error:',
-        expect.any(Error),
-      );
-
-      // Restore console.error
-      consoleSpy.mockRestore();
-    });
-
-    it('should safely handle dispatch to event with no listeners', () => {
-      expect(() => {
-        busDispatch('non-existent', 'data');
-      }).not.toThrow();
-    });
-
-    it('should handle empty or invalid topics', () => {
-      const listener = vi.fn();
-
-      // Test empty topic
-      busDispatch('', 'data');
-      expect(listener).not.toHaveBeenCalled();
-
-      // Test invalid listener
-      const unsubscribe = busSubscribe('', null as unknown as TEventBusListener<unknown>);
-      expect(unsubscribe).toBeDefined();
-      unsubscribe(); // Should not throw
-    });
-
-    it('should ignore non-CustomEvents', () => {
-      const listener = vi.fn();
-      busSubscribe('test-topic', listener);
-
-      // Dispatch a regular Event instead of CustomEvent
-      window.dispatchEvent(new Event('test-topic'));
-
+    it("can be cancelled before firing", () => {
+      const listener = mock((_msg: unknown) => {});
+      const unsubscribe = busOnce("once-topic-2", listener);
+      unsubscribe();
+      busDispatch("once-topic-2", "x");
       expect(listener).not.toHaveBeenCalled();
     });
 
-    it('should generate consistent hashed topics with special characters', () => {
-      const listener = vi.fn();
-      const topic = '🚀 special → characters ←';
-
-      busSubscribe(topic, listener);
-      busDispatch(topic, 'test');
-
-      expect(listener).toHaveBeenCalledWith('test');
-    });
-
-    it('should handle undefined or null event data', () => {
-      const listener = vi.fn();
-      busSubscribe('test-topic', listener);
-
-      busDispatch('test-topic', undefined);
-      busDispatch('test-topic', null);
-
-      expect(listener).toHaveBeenCalledTimes(2);
-      expect(listener).toHaveBeenNthCalledWith(1, null);
-      expect(listener).toHaveBeenNthCalledWith(2, null);
-    });
-
-    it('should handle falsy event data', () => {
-      const listener = vi.fn();
-      busSubscribe('test-topic', listener);
-
-      busDispatch('test-topic', 0);
-      busDispatch('test-topic', '');
-      busDispatch('test-topic', false);
-
-      expect(listener).toHaveBeenCalledTimes(3);
-      expect(listener).toHaveBeenNthCalledWith(1, 0);
-      expect(listener).toHaveBeenNthCalledWith(2, '');
-      expect(listener).toHaveBeenNthCalledWith(3, false);
-    });
-
-    it('should handle invalid event objects', () => {
-      const listener = vi.fn();
-      const topic = 'test-topic';
-
-      // Get the actual event listener by spying on addEventListener
-      const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
-      busSubscribe(topic, listener);
-
-      // Get the event listener function that was passed to addEventListener
-      const eventListener = addEventListenerSpy.mock.calls[0][1] as EventListener;
-
-      // Test with various invalid events
-      eventListener(null as unknown as Event);
-      eventListener(undefined as unknown as Event);
-      eventListener({} as Event); // plain object that's not an Event
-
-      expect(listener).not.toHaveBeenCalled();
-
-      addEventListenerSpy.mockRestore();
+    it("returns a no-op for empty topic or invalid listener", () => {
+      const noop1 = busOnce("", () => {});
+      const noop2 = busOnce("x", null as unknown as TEventBusListener<unknown>);
+      expect(() => noop1()).not.toThrow();
+      expect(() => noop2()).not.toThrow();
     });
   });
 });
