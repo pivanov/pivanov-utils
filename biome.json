@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["./src/**/*.ts", "./src/**/*.tsx", "./scripts/**/*.ts", "./docs/.vitepress/**/*.ts", "./*.ts"]
+    "includes": ["./src/**/*.ts", "./src/**/*.tsx", "./scripts/**/*.ts", "./bench/**/*.ts", "./docs/.vitepress/**/*.ts", "./*.ts"]
   },
   "formatter": {
     "enabled": true,
