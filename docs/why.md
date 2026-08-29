@@ -13,7 +13,7 @@ A small, opinionated TypeScript toolbox - the handful of helpers we reach for on
 | `tools/deepClone` | Rich deep clone - prototypes, getters/setters, symbols, Buffers, TypedArrays, circular refs |
 | `tools/isEqual` | Deep structural equality with cycle detection; handles RegExp, Error, TypedArrays, ArrayBuffer |
 | `tools/dom` | `isBrowser`, `checkVisibility`, `isInViewport`, `setStyleProperties`, `calculateRenderedTextWidth` |
-| `tools/cache-api` | Typed wrapper over the browser Cache API with BigInt-safe serialization and optional TTL |
+| `cache` | Cache Storage helpers with BigInt-safe serialization, optional TTL, and raw `Response` caching - shipped as a standalone `@pivanov/utils/cache` entry point |
 | `tools/eventBus` | Typed event bus with `busDispatch`, `busSubscribe`, `busOnce`, and the `useEventBus` React hook |
 | `types` | `DeepPartial`, `DeepReadonly`, `Mutable`, `Prettify`, `TDict` |
 

@@ -1,4 +1,4 @@
-export * from "./cache-api";
+export * from "../cache";
 export * from "./deepClone";
 export * from "./dom";
 export * from "./eventBus";

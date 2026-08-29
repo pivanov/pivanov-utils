@@ -8,7 +8,7 @@ Using the browser Cache API for time-bound client-side storage.
 import {
   storageSetItemWithTTL,
   storageGetItemWithTTL,
-} from '@pivanov/utils/tools';
+} from '@pivanov/utils/cache';
 
 const CACHE = 'my-app';
 
@@ -28,7 +28,7 @@ if (token) {
 import {
   storageGetItemWithTTL,
   storageSetItemWithTTL,
-} from '@pivanov/utils/tools';
+} from '@pivanov/utils/cache';
 
 async function loadUser(id: string) {
   const CACHE = 'user-cache';
@@ -51,7 +51,7 @@ Group related keys with a prefix so you can sweep them:
 import {
   storageSetItemWithTTL,
   storageClearByPrefix,
-} from '@pivanov/utils/tools';
+} from '@pivanov/utils/cache';
 
 await storageSetItemWithTTL('session', 'draft-email', 'hi...', 60_000);
 await storageSetItemWithTTL('session', 'draft-subject', 'hello', 60_000);
@@ -64,7 +64,7 @@ await storageClearByPrefix('session', 'draft-');
 
 ```ts
 import { retry } from '@pivanov/utils/promise';
-import { storageGetItemWithTTL, storageSetItemWithTTL } from '@pivanov/utils/tools';
+import { storageGetItemWithTTL, storageSetItemWithTTL } from '@pivanov/utils/cache';
 
 async function resilientFetch(url: string) {
   const cached = await storageGetItemWithTTL<unknown>('api', url);

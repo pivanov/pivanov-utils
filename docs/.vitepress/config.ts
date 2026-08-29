@@ -50,7 +50,7 @@ export default defineConfig({
           { text: "deepClone", link: "/api/deep-clone" },
           { text: "isEqual", link: "/api/is-equal" },
           { text: "DOM", link: "/api/dom" },
-          { text: "Cache API", link: "/api/cache-api" },
+          { text: "Cache Storage", link: "/api/cache-api" },
           { text: "Event Bus", link: "/api/event-bus" },
           { text: "Types", link: "/api/types" },
         ],

@@ -10,7 +10,7 @@ import {
   storageRemoveItem,
   storageSetItem,
   stringifyBigIntValues,
-} from "../cache-api";
+} from "../storage";
 
 const mockCache = {
   put: mock(async () => {}),
@@ -23,9 +23,8 @@ const mockCaches = {
   open: mock(async (_name: string) => mockCache),
 };
 
-(globalThis as unknown as { caches: typeof mockCaches }).caches = mockCaches;
-
 const resetMocks = () => {
+  (globalThis as unknown as { caches: typeof mockCaches }).caches = mockCaches;
   mockCache.put.mockReset();
   mockCache.put.mockImplementation(async () => {});
   mockCache.match.mockReset();
@@ -203,7 +202,7 @@ describe("Cache API Utils", () => {
   });
 });
 
-import { storageClearByPrefix, storageClearBySuffix, storageGetItemWithTTL, storageSetItemWithTTL } from "../cache-api";
+import { storageClearByPrefix, storageClearBySuffix, storageGetItemWithTTL, storageSetItemWithTTL } from "../storage";
 
 describe("Cache API new APIs", () => {
   beforeEach(resetMocks);

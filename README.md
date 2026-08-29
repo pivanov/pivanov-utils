@@ -58,7 +58,7 @@ import { deepClone, isEqual, busDispatch, useEventBus } from '@pivanov/utils/too
 | `tools/deepClone` | Rich deep clone (prototypes, getters/setters, symbols, Buffers, TypedArrays, circular refs) |
 | `tools/isEqual` | Deep equality with cycle detection; compares RegExp, Error, TypedArrays, ArrayBuffer |
 | `tools/dom` | `isBrowser`, `checkVisibility`, `isInViewport`, `setStyleProperties`, `calculateRenderedTextWidth` |
-| `tools/cache-api` | Typed wrapper over the browser Cache API, with TTL support |
+| `cache` | Cache Storage helpers: JSON metadata with optional TTL, plus raw `Request`/`Response` caching. Shipped as a standalone `@pivanov/utils/cache` entry point |
 | `tools/eventBus` | `busDispatch`, `busSubscribe`, `busOnce`, `useEventBus` - typed topics, optional error handler |
 | `types` | `TDict`, `TObjType`, `DeepPartial`, `DeepReadonly`, `Mutable`, `Prettify` |
 
@@ -113,12 +113,47 @@ See the [Typed Events guide](https://pivanov.github.io/pivanov-utils/guides/type
 import {
   storageSetItemWithTTL,
   storageGetItemWithTTL,
-} from '@pivanov/utils/tools';
+} from '@pivanov/utils/cache';
 
 await storageSetItemWithTTL('app', 'token', 'abc123', 10 * 60 * 1000);
 
 const token = await storageGetItemWithTTL<string>('app', 'token');
 // null if missing or expired; expired entries are deleted on read
+```
+
+### Raw response caching in a service worker
+
+`@pivanov/utils/cache` is built as its own bundle with no React, no event bus and
+no DOM helpers, so a service worker can import it without dragging the rest of
+the package in. Alongside the JSON helpers it exposes a raw layer that stores a
+`Response` byte for byte, preserving body, status and headers.
+
+```ts
+import {
+  cacheDelete,
+  cacheMatchResponse,
+  cacheNames,
+  cachePutResponse,
+} from '@pivanov/utils/cache';
+
+const CACHE = 'assets-v3';
+
+self.addEventListener('fetch', (event: FetchEvent) => {
+  event.respondWith((async () => {
+    const hit = await cacheMatchResponse(CACHE, event.request);
+    if (hit) {
+      return hit;
+    }
+
+    const response = await fetch(event.request);
+    await cachePutResponse(CACHE, event.request, response); // caches a clone
+    return response;                                        // still readable
+  })());
+});
+
+// Revision cleanup
+const outdated = (await cacheNames()).filter((name) => name !== CACHE);
+await Promise.all(outdated.map(cacheDelete));
 ```
 
 ### Deep clone that actually preserves shape

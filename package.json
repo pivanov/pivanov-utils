@@ -1,6 +1,6 @@
 {
   "name": "@pivanov/utils",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A focused collection of TypeScript utilities for modern web development",
   "type": "module",
   "repository": {
@@ -23,8 +23,10 @@
     "docs:build": "bun x vitepress build docs",
     "docs:preview": "bun x vitepress preview docs",
     "bench": "bun run bench/index.ts",
-    "prepublishOnly": "bun run build",
-    "publish": "npm publish --access public"
+    "prepublishOnly": "bun run build && bun run verify:dist",
+    "publish": "npm publish --access public",
+    "verify:dist": "bun run scripts/verify-dist.ts",
+    "verify": "bun run lint && bun run typecheck && bun test && bun run build && bun run verify:dist"
   },
   "author": {
     "name": "Pavel Ivanov",
@@ -58,6 +60,11 @@
       "types": "./dist/types/assertion/index.d.ts",
       "import": "./dist/esm/assertion/index.js",
       "require": "./dist/cjs/assertion/index.js"
+    },
+    "./cache": {
+      "types": "./dist/types/cache/index.d.ts",
+      "import": "./dist/esm/cache/index.js",
+      "require": "./dist/cjs/cache/index.js"
     },
     "./object": {
       "types": "./dist/types/object/index.d.ts",

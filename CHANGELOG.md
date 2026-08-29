@@ -1,5 +1,57 @@
 # Changelog
 
+## 1.0.1
+
+Service-worker-safe cache entry point.
+
+### New entry point
+
+**`@pivanov/utils/cache`** - the Cache Storage helpers, on their own.
+
+The helpers previously shipped only through `@pivanov/utils/tools`, whose bundle
+carries React (`useEventBus`), the event bus and the DOM helpers. A service
+worker that wanted `storageGetItem` had to pull all of it in. The new entry point
+is built from a dedicated, unsplit Bun build containing nothing but the cache
+implementation, and a release-time check asserts the ESM and CJS artifacts hold
+no `react`, `react-dom`, `useEffect` or event-bus references.
+
+`@pivanov/utils/tools` and the root export keep exposing every cache helper, so
+existing imports are unaffected.
+
+### New raw response layer
+
+JSON serialization is wrong for a script, a stylesheet or a font. These helpers
+store a `Response` byte for byte, preserving body, status and headers:
+
+- `cachePutResponse(cacheName, request, response)` - caches a **clone**, so the
+  caller's response stays readable and can still be returned to the page
+- `cacheMatchResponse(cacheName, request, options?)` - a fresh `Response`, or
+  `undefined` on a miss
+- `cacheHasResponse(cacheName, request, options?)`
+- `cacheDeleteResponse(cacheName, request, options?)`
+- `cacheResponseKeys(cacheName)` - the request URLs held in a cache, for
+  revision cleanup
+
+Match, has and delete accept the standard `CacheQueryOptions`, so
+`{ ignoreSearch: true }` works across cache-busting query strings.
+
+### New cache management helpers
+
+- `cacheNames()` - every cache name in the origin
+- `cacheExists(cacheName)` - existence without creating the cache
+- `cacheDelete(cacheName)` - drop a whole cache
+- `cacheClear(cacheName)` - empty a cache, keep the cache
+
+### Other
+
+- `isCacheStorageSupported()` - guard cache access during SSR or in Node. Every
+  helper now throws a descriptive error instead of a bare `ReferenceError` when
+  `caches` is absent.
+- The cache implementation moved from `src/tools/cache-api` to `src/cache`. This
+  is internal: no import path in the published package changed.
+- `bun run verify:dist` verifies the built package against `package.json#exports`
+  and is wired into `prepublishOnly`.
+
 ## 1.0.0
 
 First stable release. Focus: **major additive expansion, documentation site, and modernized build** - with near-full backward compatibility for 0.0.3 callers.

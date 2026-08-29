@@ -1,3 +1,5 @@
+import { createCacheKey, openCache } from "./internal";
+
 /**
  * `JSON.stringify` replacer that converts `BigInt` values to strings.
  *
@@ -10,13 +12,6 @@ export const stringifyBigIntValues = (_key: string, value: unknown): unknown => 
   return typeof value === "bigint" ? value.toString() : value;
 };
 
-const createCacheKey = (key: string): string => {
-  if (key.startsWith("http://") || key.startsWith("https://")) {
-    return key;
-  }
-  return `https://cache.internal/${key}`;
-};
-
 /**
  * Stores a JSON-serializable value in the browser Cache API.
  *
@@ -24,7 +19,7 @@ const createCacheKey = (key: string): string => {
  * `undefined`, and `Symbol` values are lossy. `BigInt` is auto-stringified.
  */
 export const storageSetItem = async (cacheName: string, key: string, value: unknown): Promise<void> => {
-  const cache = await caches.open(cacheName);
+  const cache = await openCache(cacheName);
   const serializedValue = JSON.stringify(value, stringifyBigIntValues);
   const response = new Response(serializedValue, {
     headers: { "Content-Type": "application/json" },
@@ -37,7 +32,7 @@ export const storageSetItem = async (cacheName: string, key: string, value: unkn
  * Retrieves a value from the Cache API. Returns `null` if not found.
  */
 export const storageGetItem = async <T>(cacheName: string, key: string): Promise<T | null> => {
-  const cache = await caches.open(cacheName);
+  const cache = await openCache(cacheName);
   const cacheKey = createCacheKey(key);
   const response = await cache.match(new Request(cacheKey));
   if (!response) {
@@ -103,7 +98,7 @@ export const storageGetItemWithTTL = async <T>(cacheName: string, key: string): 
  * Removes a single key. Returns `true` if the key existed and was deleted.
  */
 export const storageRemoveItem = async (cacheName: string, key: string): Promise<boolean> => {
-  const cache = await caches.open(cacheName);
+  const cache = await openCache(cacheName);
   const cacheKey = createCacheKey(key);
   return cache.delete(new Request(cacheKey));
 };
@@ -112,7 +107,7 @@ export const storageRemoveItem = async (cacheName: string, key: string): Promise
  * Clears every entry in the named cache.
  */
 export const storageClear = async (cacheName: string): Promise<void> => {
-  const cache = await caches.open(cacheName);
+  const cache = await openCache(cacheName);
   const keys = await cache.keys();
   for (const request of keys) {
     await cache.delete(request);
@@ -126,7 +121,7 @@ export const storageClear = async (cacheName: string): Promise<void> => {
  *   readability. This function will remain through v1.x.
  */
 export const storageClearByPrefixOrSuffix = async (cacheName: string, str: string, isPrefix = true): Promise<void> => {
-  const cache = await caches.open(cacheName);
+  const cache = await openCache(cacheName);
   const keys = await cache.keys();
   for (const request of keys) {
     const urlParts = request.url.split("/");
@@ -155,7 +150,7 @@ export const storageClearBySuffix = async (cacheName: string, suffix: string): P
  * Checks whether a key exists in the cache.
  */
 export const storageExists = async (cacheName: string, key: string): Promise<boolean> => {
-  const cache = await caches.open(cacheName);
+  const cache = await openCache(cacheName);
   const cacheKey = createCacheKey(key);
   const response = await cache.match(new Request(cacheKey));
   return response !== undefined;
@@ -165,7 +160,7 @@ export const storageExists = async (cacheName: string, key: string): Promise<boo
  * Returns every key currently stored in the cache.
  */
 export const storageGetAllKeys = async (cacheName: string): Promise<string[]> => {
-  const cache = await caches.open(cacheName);
+  const cache = await openCache(cacheName);
   const keys = await cache.keys();
   return keys.map((request) => {
     const urlParts = request.url.split("/");
@@ -177,7 +172,7 @@ export const storageGetAllKeys = async (cacheName: string): Promise<string[]> =>
  * Calculates the size in bytes of the cache, or of a single entry.
  */
 export const storageCalculateSize = async (cacheName: string, cacheKey?: string): Promise<number> => {
-  const cache = await caches.open(cacheName);
+  const cache = await openCache(cacheName);
 
   if (cacheKey) {
     const normalizedKey = createCacheKey(cacheKey);
